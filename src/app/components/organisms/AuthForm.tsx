@@ -25,22 +25,16 @@ export const AuthForm = () => {
   };
 
   return (
-    /* กำหนด h-[650px] เพื่อให้กล่องมีความสูงเท่ากันเสมอ ไม่ว่าจะอยู่หน้า Login หรือ Signup */
     <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 flex flex-col h-[650px] overflow-hidden">
       
       <AuthHeader isLogin={isLogin} />
 
-      {/* ใช้ flex-1 และ flex-col เพื่อกระจายพื้นที่ให้พอดีกับความสูงที่กำหนดไว้ */}
       <div className="p-8 flex-1 flex flex-col">
         
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg shrink-0">
-            {errorMsg}
-          </div>
-        )}
+        {/* ลบกล่องแจ้งเตือน Error สีแดงตรงนี้ออกไปได้เลยครับ! */}
 
         <form action={handleSubmit} className="space-y-5 flex-1 flex flex-col justify-center">
-          {/* ช่องกรอกชื่อ: ใช้การซ่อน/แสดง แต่ไม่ทำให้ Layout พัง เพราะกล่องหลักถูกล็อคความสูงไว้แล้ว */}
+          
           {!isLogin && (
             <Input 
               label="ชื่อผู้ใช้งาน"
@@ -49,6 +43,8 @@ export const AuthForm = () => {
               placeholder="เช่น Boss Thanachote"
               icon={User}
               required={!isLogin}
+              // ส่ง Error มาแสดงตรงนี้เฉพาะตอนอยู่หน้า สมัครสมาชิก
+              error={!isLogin && errorMsg ? errorMsg : undefined} 
             />
           )}
 
@@ -59,6 +55,8 @@ export const AuthForm = () => {
             placeholder="hello@beeblog.com"
             icon={Mail}
             required
+            // ส่ง Error มาแสดงตรงนี้เฉพาะตอนอยู่หน้า ล็อกอิน
+            error={isLogin && errorMsg ? errorMsg : undefined}
           />
 
           <Input 

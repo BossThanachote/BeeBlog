@@ -1,5 +1,5 @@
 import { TrendingUp } from 'lucide-react';
-import { PopularItem, AuthorItem } from '../../components/molecules/RightSidebarItem';
+import { PopularItem, AuthorItem } from '../molecules/RightSidebarItem';
 
 export const RightSidebar = () => {
   return (
