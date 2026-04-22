@@ -38,9 +38,9 @@ export const AuthForm = () => {
           {!isLogin && (
             <Input 
               label="ชื่อผู้ใช้งาน"
-              name="fullName"
+              name="username"
               type="text"
-              placeholder="เช่น Boss Thanachote"
+              placeholder="เช่น BeeUser"
               icon={User}
               required={!isLogin}
               // ส่ง Error มาแสดงตรงนี้เฉพาะตอนอยู่หน้า สมัครสมาชิก
