@@ -1,14 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
-// ฟังก์ชันสำหรับเข้าสู่ระบบ (Login)
+// 🟢 ฟังก์ชันสำหรับเข้าสู่ระบบ (Login)
 export async function login(formData: FormData) {
   const supabase = await createClient()
-  
-  // Login ใช้แค่อีเมลและรหัสผ่านเท่านั้นครับ
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -21,26 +18,22 @@ export async function login(formData: FormData) {
     return { error: error.message }
   }
 
-  // ล้าง Cache หน้าเว็บและเด้งไปหน้าแรก
   revalidatePath('/', 'layout')
-  redirect('/')
+  return { success: true } 
 }
 
-// ฟังก์ชันสำหรับสมัครสมาชิก (Signup)
+// 🔵 ฟังก์ชันสำหรับสมัครสมาชิก (Signup)
 export async function signup(formData: FormData) {
   const supabase = await createClient()
-  
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const username = formData.get('username') as string // รับค่า username แทน
+  const username = formData.get('username') as string
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {
-        username: username, // ส่ง username ไปให้ Database Trigger ทำงาน
-      }
+      data: { username: username }
     }
   })
 
@@ -49,17 +42,17 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/') 
+  return { success: true }
 }
 
-// ฟังก์ชันสำหรับออกจากระบบ (Logout)
+// 🔴 ฟังก์ชันสำหรับออกจากระบบ (Logout) ที่หายไป! กลับมาแล้วครับ
 export async function logout() {
   const supabase = await createClient()
   
-  // สั่งให้ Supabase เคลียร์ Session ออกจากระบบ
+  // สั่งให้ Supabase เคลียร์ Session ฝั่ง Server
   await supabase.auth.signOut()
 
-  // รีเซ็ต Cache หน้าเว็บ และเด้งกลับไปหน้า Login
+  // รีเซ็ต Cache หน้าเว็บ แล้วส่ง success กลับไปให้ Navbar จัดการต่อ
   revalidatePath('/', 'layout')
-  redirect('/login')
+  return { success: true }
 }

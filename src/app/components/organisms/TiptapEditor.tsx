@@ -9,10 +9,31 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { Bold, Italic, Underline as UnderlineIcon, List, Image as ImageIcon, AlignLeft, AlignCenter, AlignRight, GripHorizontal } from 'lucide-react'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
+import { supabase } from '@/lib/supabase'
 
-// 🌟 Component จัดการ Layout รูปภาพ (เพิ่มระบบเล็งพิกัดแทรกรูป ซ้าย/ขวา)
+// ☁️ ฟังก์ชันส่งรูปไปฝากไว้ที่ Cloud (Supabase Storage)
+const uploadImageToCloud = async (file: File): Promise<string> => {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${Math.random()}.${fileExt}`
+  const filePath = `blog-images/${fileName}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('beeblog-storage')
+    .upload(filePath, file)
+
+  if (uploadError) {
+    throw uploadError
+  }
+
+  const { data } = supabase.storage
+    .from('beeblog-storage')
+    .getPublicUrl(filePath)
+
+  return data.publicUrl
+}
+
+// 🌟 Component จัดการ Layout รูปภาพ (Medium Clone + Supabase)
 const ImageGroupComponent = (props: any) => {
-  // 🌟 ดึง editor ออกมาใช้งานด้วยเพื่อใช้จัดการข้อมูลข้ามกล่อง
   const { node, selected, updateAttributes, deleteNode, getPos, editor } = props
   const images = node.attrs.images || []
   const isSingle = images.length === 1
@@ -20,8 +41,6 @@ const ImageGroupComponent = (props: any) => {
   const [aspectRatios, setAspectRatios] = React.useState<number[]>([])
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null)
   const [imagesLoaded, setImagesLoaded] = React.useState<boolean[]>(new Array(images.length).fill(false))
-  
-  // 🌟 State ใหม่สำหรับจำพิกัดว่ากำลังจะดรอปรูปทาง ซ้าย หรือ ขวา
   const [dragOverInfo, setDragOverInfo] = React.useState<{ index: number, isRight: boolean } | null>(null)
 
   React.useEffect(() => {
@@ -106,43 +125,38 @@ const ImageGroupComponent = (props: any) => {
                 e.dataTransfer.setData('application/tiptap-image-move', JSON.stringify({ src, fromPos: getPos(), fromIndex: index }))
                 e.dataTransfer.effectAllowed = 'move'
               }}
-              // 🌟 1. ดักจับตอนเอาเมาส์ลากมาอยู่บนรูป เพื่อเล็งพิกัดซ้าย/ขวา
               onDragOver={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
                 const rect = e.currentTarget.getBoundingClientRect()
-                const isRight = e.clientX > rect.left + rect.width / 2 // ถ้าเมาส์อยู่เลยกึ่งกลาง = แทรกด้านขวา
+                const isRight = e.clientX > rect.left + rect.width / 2
                 setDragOverInfo({ index, isRight })
               }}
               onDragLeave={() => setDragOverInfo(null)}
-              // 🌟 2. ดักจับตอน "ปล่อยเมาส์ (Drop)" แบบแม่นยำ
               onDrop={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
                 setDragOverInfo(null)
 
-                // คำนวณ Index เป้าหมาย ว่าจะให้ไปอยู่ลำดับที่เท่าไหร่
                 const rect = e.currentTarget.getBoundingClientRect()
                 const isRight = e.clientX > rect.left + rect.width / 2
                 let targetIndex = isRight ? index + 1 : index
 
                 const internalMoveData = e.dataTransfer.getData('application/tiptap-image-move')
 
-                // 🔀 กรณี: ลากย้ายรูปภาพ
+                // 🔀 กรณี: ลากย้ายรูปภาพภายใน Editor
                 if (internalMoveData) {
                   try {
                     const { src: moveSrc, fromPos, fromIndex } = JSON.parse(internalMoveData)
 
                     if (fromPos === getPos()) {
-                      // 1. ลากสลับตำแหน่ง "ในกล่องเดียวกัน"
                       if (fromIndex === targetIndex || fromIndex === targetIndex - 1) return 
                       const newImages = [...images]
-                      newImages.splice(fromIndex, 1) // ดึงรูปออกจากตำแหน่งเดิม
-                      if (fromIndex < targetIndex) targetIndex-- // ขยับ Index ถ้าตำแหน่งเลื่อน
-                      newImages.splice(targetIndex, 0, moveSrc) // เสียบรูปเข้าไปในตำแหน่งเป้าหมายเป๊ะๆ
+                      newImages.splice(fromIndex, 1)
+                      if (fromIndex < targetIndex) targetIndex--
+                      newImages.splice(targetIndex, 0, moveSrc)
                       updateAttributes({ images: newImages })
                     } else {
-                      // 2. ลากย้ายมาจาก "กล่องอื่น"
                       if (images.length >= 3) {
                         alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้วครับ')
                         return
@@ -151,7 +165,6 @@ const ImageGroupComponent = (props: any) => {
                       newImages.splice(targetIndex, 0, moveSrc)
                       updateAttributes({ images: newImages })
 
-                      // สั่งลบรูปที่กล่องเดิมทิ้ง (Move ของจริง)
                       const tr = editor.state.tr
                       const sourceNode = editor.state.doc.nodeAt(fromPos)
                       if (sourceNode && sourceNode.type.name === 'imageGroup') {
@@ -167,18 +180,33 @@ const ImageGroupComponent = (props: any) => {
                     }
                   } catch (err) { console.error('Move Error:', err) }
                 } 
-                // 🔀 กรณี: ลากไฟล์รูปจากเครื่องคอมพิวเตอร์มาใส่
+                // 🔀 กรณี: ลากไฟล์รูปจากเครื่องคอมพิวเตอร์มาใส่ "ทับ" รูปเดิม
                 else if (e.dataTransfer.files?.length) {
                   const file = e.dataTransfer.files[0]
-                  if (file.type.startsWith('image/') && images.length < 3) {
-                    const reader = new FileReader()
-                    reader.onload = (evt) => {
-                      const newSrc = evt.target?.result as string
-                      const newImages = [...images]
-                      newImages.splice(targetIndex, 0, newSrc) // แทรกซ้าย/ขวา ได้อย่างอิสระ
-                      updateAttributes({ images: newImages })
+                  if (file.type.startsWith('image/')) {
+                    
+                    // 🌟 เช็ค Limit ก่อนอัปโหลด
+                    let totalImages = 0
+                    editor.state.doc.descendants((n: any) => {
+                      if (n.type.name === 'imageGroup') totalImages += n.attrs.images.length
+                    })
+                    if (totalImages >= 6) {
+                      alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+                      return
                     }
-                    reader.readAsDataURL(file)
+
+                    if (images.length < 3) {
+                      uploadImageToCloud(file).then(url => {
+                        const newImages = [...images]
+                        newImages.splice(targetIndex, 0, url)
+                        updateAttributes({ images: newImages })
+                      }).catch(err => {
+                        console.error("Upload Error:", err)
+                        alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
+                      })
+                    } else {
+                      alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้วครับ')
+                    }
                   }
                 }
               }}
@@ -193,7 +221,6 @@ const ImageGroupComponent = (props: any) => {
               `}
               style={{ width: widthPercentage }}
             >
-              {/* 🌟 3. "เส้นบอกตำแหน่งสีเหลือง" จะแสดงขึ้นมาเวลาเอาเมาส์ลากรูปมาเล็งที่กรอบนี้ */}
               {dragOverInfo?.index === index && (
                 <div className={`absolute top-0 bottom-0 w-2 bg-yellow-400 z-50 rounded-full shadow-lg ${dragOverInfo.isRight ? 'right-0' : 'left-0'}`} />
               )}
@@ -228,6 +255,7 @@ const ImageGroupComponent = (props: any) => {
   )
 }
 
+// 🌟 สร้าง Extension สำหรับ ImageGroup
 const ImageGroup = Node.create({
   name: 'imageGroup',
   group: 'block',
@@ -237,12 +265,10 @@ const ImageGroup = Node.create({
     return { 
       images: { 
         default: [],
-        // 🌟 1. ดักตอนเอามาวาง (Paste): แปลงข้อความกลับเป็น Array
         parseHTML: element => {
           const data = element.getAttribute('data-images')
           return data ? JSON.parse(data) : []
         },
-        // 🌟 2. ดักตอนกดก็อปปี้ (Copy): แปลง Array เป็นข้อความฝากไว้ใน HTML
         renderHTML: attributes => {
           return { 'data-images': JSON.stringify(attributes.images) }
         }
@@ -261,7 +287,7 @@ const TabHandler = Extension.create({
   },
 })
 
-export const TiptapEditor = ({ content, onChange }: { content: string, onChange: (c: string) => void }) => {
+export const TiptapEditor = ({ content, onChange, onError }: { content: string, onChange: (c: string) => void, onError?: (title: string, message: string) => void }) => {
   const [, setRenderTrigger] = useState(0)
 
   const editor = useEditor({
@@ -280,31 +306,40 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
     onTransaction: () => { setRenderTrigger(prev => prev + 1) },
     editorProps: {
       attributes: { class: 'prose prose-lg max-w-none focus:outline-none min-h-[600px] text-gray-900 p-4' },
-      handlePaste: (view, event, slice) => {
+      
+      // 🌟 ดักจับการกด Ctrl+V (Paste)
+      handlePaste: (view, event) => {
         if (event.clipboardData?.files?.length) {
           const file = event.clipboardData.files[0]
-          // เช็คว่าเป็นไฟล์รูปภาพไหม (เช่น ก็อปมาจาก Snipping Tool หรือก็อปไฟล์มา)
           if (file.type.startsWith('image/')) {
             event.preventDefault()
-            const reader = new FileReader()
-            reader.onload = (e) => {
-              const src = e.target?.result as string
-              // สร้างกล่อง ImageGroup ใหม่แล้วเสียบลงไปตรงที่เคอร์เซอร์กระพริบอยู่
-              const newNode = view.state.schema.nodes.imageGroup.create({ images: [src] })
-              const tr = view.state.tr
-              tr.replaceSelectionWith(newNode)
-              view.dispatch(tr)
+            
+            // 🛑 เช็ค Limit 6 รูป
+            let total = 0
+            view.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
+            if (total >= 6) {
+              alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              return true
             }
-            reader.readAsDataURL(file)
+
+            uploadImageToCloud(file).then(url => {
+              const newNode = view.state.schema.nodes.imageGroup.create({ images: [url] })
+              view.dispatch(view.state.tr.replaceSelectionWith(newNode))
+            }).catch(err => {
+              console.error("Paste Upload Error:", err)
+              alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
+            })
             return true
           }
         }
-        return false // ถ้าไม่ใช่รูปภาพ ก็ปล่อยให้ Tiptap วางข้อความตามปกติ
+        return false
       },
-      
+
+      // 🌟 ดักจับการลากไฟล์มาวางบน Editor (Drop)
       handleDrop: (view, event, slice, moved) => {
-        // จัดการลากเพื่อตั้งกล่องใหม่ (เมื่อไม่ได้วางบนรูปภาพ)
         const internalMoveData = event.dataTransfer?.getData('application/tiptap-image-move')
+        
+        // 1. กรณี: เป็นการลากรูปย้ายตำแหน่งภายใน
         if (internalMoveData) {
           try {
             const { src, fromPos, fromIndex } = JSON.parse(internalMoveData)
@@ -319,9 +354,8 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
               if (node.type.name === 'imageGroup') { targetGroupPos = pos; targetGroupNode = node; return false }
             })
 
-            // ถ้าปล่อยลงกล่องที่ Tiptap หาเจอ แต่ไม่ได้เจาะจงซ้ายขวา
             if (targetGroupPos !== -1 && targetGroupPos !== fromPos) {
-              if (targetGroupNode.attrs.images.length >= 3) return false // เต็มแล้วไม่รับ
+              if (targetGroupNode.attrs.images.length >= 3) return false 
               
               const sourceNode = view.state.doc.nodeAt(fromPos)
               if (sourceNode && sourceNode.type.name === 'imageGroup') {
@@ -337,7 +371,6 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
               return true
             }
 
-            // ถ้าปล่อยลงพื้นที่ว่าง (ตัวหนังสือ)
             if (targetGroupPos === -1) {
               const sourceNode = view.state.doc.nodeAt(fromPos)
               if (sourceNode && sourceNode.type.name === 'imageGroup') {
@@ -355,16 +388,23 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
           } catch (e) {}
         }
         
-        // จัดการดึงไฟล์รูปภาพจากข้างนอกเข้าพื้นที่ว่าง
+        // 2. กรณี: เป็นการดึงไฟล์ใหม่จากคอมพิวเตอร์มาหย่อนในบรรทัดว่างๆ
         if (!moved && event.dataTransfer?.files?.length) {
           const file = event.dataTransfer.files[0]
           if (file.type.startsWith('image/')) {
             event.preventDefault()
-            const reader = new FileReader()
-            reader.onload = (e) => {
-              const src = e.target?.result as string
-              const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
-              if (coordinates && view.state) {
+            
+            // 🛑 เช็ค Limit 6 รูป
+            let total = 0
+            view.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
+            if (total >= 6) {
+              alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              return true
+            }
+
+            const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
+            if (coordinates && view.state) {
+              uploadImageToCloud(file).then(url => {
                 let targetGroupPos = -1
                 let targetGroupNode: any = null
                 view.state.doc.nodesBetween(coordinates.pos, coordinates.pos, (node, pos) => {
@@ -372,19 +412,21 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
                 })
 
                 if (targetGroupNode && targetGroupNode.attrs.images.length < 3) {
-                  const newImages = [...targetGroupNode.attrs.images, src]
+                  const newImages = [...targetGroupNode.attrs.images, url]
                   const tr = view.state.tr
                   tr.setNodeMarkup(targetGroupPos, null, { images: newImages })
                   view.dispatch(tr)
                 } else if (!targetGroupNode) {
-                  const newNode = view.state.schema.nodes.imageGroup.create({ images: [src] })
+                  const newNode = view.state.schema.nodes.imageGroup.create({ images: [url] })
                   const tr = view.state.tr
                   tr.insert(coordinates.pos, newNode)
                   view.dispatch(tr)
                 }
-              }
+              }).catch(err => {
+                console.error("Drop Upload Error:", err)
+                alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
+              })
             }
-            reader.readAsDataURL(file)
             return true
           }
         }
@@ -409,11 +451,46 @@ export const TiptapEditor = ({ content, onChange }: { content: string, onChange:
           <div className="w-px h-6 bg-gray-200 mx-2"></div>
           <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-2 rounded-xl transition-all ${editor.isActive('bulletList') ? 'bg-yellow-50 text-yellow-600' : 'text-gray-500 hover:bg-gray-50'}`}><List className="w-5 h-5" /></button>
         </div>
+        
+        {/* 🌟 ปุ่มเพิ่มรูปภาพ พร้อมระบบเช็ค Limit 6 รูป */}
         <button 
           type="button" 
           onClick={() => {
-            const url = window.prompt('URL รูปภาพ:');
-            if (url) editor.chain().focus().insertContent({ type: 'imageGroup', attrs: { images: [url] } }).run()
+            // 🛑 เช็ค Limit ก่อนเปิดหน้าต่างเลือกไฟล์
+            let total = 0
+            editor.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
+            
+            if (total >= 6) {
+              // 🌟 เรียกใช้ Modal ผ่าน onError ตรงนี้ครับ!
+              if (onError) {
+                onError('รูปภาพเกินกำหนด', 'คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              } else {
+                alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              }
+              return
+            }
+
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = 'image/*'
+            input.onchange = async () => {
+              if (input.files?.length) {
+                const file = input.files[0]
+                try {
+                  const url = await uploadImageToCloud(file)
+                  editor.chain().focus().insertContent({ type: 'imageGroup', attrs: { images: [url] } }).run()
+                } catch (error) {
+                  console.error("Upload Error:", error)
+                  // ดัก Error ตอนอัปโหลดให้เป็น Modal ด้วยเลย
+                  if (onError) {
+                    onError("อัปโหลดไม่สำเร็จ", "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ กรุณาลองใหม่อีกครั้งครับ")
+                  } else {
+                    alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
+                  }
+                }
+              }
+            }
+            input.click()
           }} 
           className="bg-yellow-400 text-yellow-900 px-5 py-2 rounded-xl text-sm font-bold flex gap-2 items-center hover:bg-yellow-500 transition-all shadow-sm active:scale-95"
         >

@@ -1,29 +1,81 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BlogCard } from '@/app/components/organisms/BlogCard';
 import { RightSidebar } from '@/app/components/organisms/RightSidebar';
 import { Blog } from '@/app/types';
-
-const MOCK_BLOGS: Blog[] = [
-  { id: 1, title: "10 เคล็ดลับการแต่งบ้านสไตล์ Minimal ที่ใครก็ทำได้", author: "HoneyBee_99", image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000", likes: 124, comments: 18, reposts: 5 },
-  { id: 2, title: "รีวิวคาเฟ่เปิดใหม่ใจกลางอารีย์ มุมถ่ายรูปเยอะมาก!", author: "QueenBee_Travel", image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=1000", likes: 89, comments: 12, reposts: 2 },
-  { id: 3, title: "วิธีทำน้ำผึ้งมะนาวสูตรพิเศษ ดื่มแล้วสดชื่นตลอดวัน", author: "ChefWorkerBee", image: "https://images.unsplash.com/photo-1589733955941-5eeaf752f6d9?q=80&w=1000", likes: 256, comments: 45, reposts: 32 },
-  { id: 4, title: "พาตระเวนกิน 5 ร้านเด็ดเยาวราช ฉบับคนท้องถิ่น", author: "FoodieBee", image: "https://images.unsplash.com/photo-1556040220-4096d522378d?q=80&w=1000", likes: 412, comments: 56, reposts: 18 },
-  { id: 5, title: "เขียน React ยังไงให้โค้ดคลีนเหมือนมี Senior มานั่งคุม", author: "DevBoss", image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=1000", likes: 890, comments: 102, reposts: 405 }
-];
+import { useSearchParams } from 'next/navigation';
+// 🌟 1. เปลี่ยนวิธี Import Supabase ให้เหมือน Navbar
+import { createClient } from '@/utils/supabase/client'; 
+import { Loader2, SearchX, X } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'feed' | 'followed'>('feed');
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search');
+  
+  // 🌟 2. เรียกใช้ Client ที่เป็น Singleton
+  const supabase = createClient(); 
+
+  const fetchBlogs = async () => {
+    try {
+      setIsLoading(true);
+      
+      let query = supabase
+        .from('blogs')
+        // 🌟 เปลี่ยนตรงนี้: สั่งให้ดึง column ทั้งหมดของ blogs และขอ username จากตาราง users ด้วย
+        .select('*, users(username)') 
+        .eq('is_published', true);
+
+      if (searchQuery) {
+        query = query.or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) setBlogs(data as Blog[]);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, [searchQuery]); // ลบ supabase ออกจาก dependency เพื่อลดการ fetch ซ้ำซ้อน
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 w-full max-w-6xl mx-auto min-h-[calc(100vh-4rem)]">
       
-      {/* ฝั่งซ้าย: เนื้อหา Feed */}
       <div className="lg:col-span-8 px-4 md:px-8 pt-8 lg:pr-14 lg:border-r lg:border-gray-100">
         
-        {/* Tabs: เติม sticky, top-16 (อยู่ใต้ Navbar), bg-white, และ z-20 */}
-        <div className="sticky top-16 bg-white z-20 flex border-b border-gray-200 mb-6 pt-4">
+        {searchQuery && (
+          <div className="mb-8 p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center shadow-sm">
+                <SearchX className="w-5 h-5 text-yellow-900" />
+              </div>
+              <div>
+                <p className="text-xs text-yellow-700 font-medium">ผลการค้นหาสำหรับ</p>
+                <p className="text-lg font-black text-yellow-900">"{searchQuery}"</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.location.href = '/'}
+              className="p-2 hover:bg-yellow-200 rounded-full transition-colors text-yellow-700"
+              title="ล้างการค้นหา"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        <div className="sticky top-16 bg-white/80 backdrop-blur-md z-20 flex border-b border-gray-200 mb-6 pt-4">
           <button 
             onClick={() => setActiveTab('feed')}
             className={`pb-4 px-6 font-bold transition-all relative cursor-pointer ${
@@ -44,17 +96,46 @@ export default function Home() {
           </button>
         </div>
 
-        {/* รายการ Blog */}
-        <div className="space-y-6">
-          {MOCK_BLOGS.map(blog => (
-            <BlogCard key={blog.id} blog={blog} />
-          ))}
+        <div className="space-y-6 pb-20">
+          {isLoading ? (
+            <div className="flex flex-col items-center py-20 text-gray-400">
+              <Loader2 className="w-10 h-10 animate-spin text-yellow-400 mb-4" />
+              <p className="font-medium animate-pulse">กำลังค้นหาบทความที่คุณต้องการ...</p>
+            </div>
+          ) : blogs.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {blogs.map(blog => (
+                <BlogCard key={blog.id} blog={blog} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                <SearchX className="w-12 h-12 text-gray-200" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">
+                {searchQuery ? 'ไม่พบบทความที่ค้นหา' : 'ยังไม่มีบทความในขณะนี้'}
+              </h3>
+              <p className="text-gray-500 max-w-xs mx-auto leading-relaxed">
+                {searchQuery 
+                  ? `ขออภัยครับคุณ Boss เราหา "${searchQuery}" ไม่เจอจริงๆ ลองเปลี่ยนคีย์เวิร์ดใหม่ดูไหมครับ?`
+                  : 'เริ่มต้นสร้างสรรค์ผลงานชิ้นแรกของคุณด้วยการกดปุ่ม เขียน Blog ด้านบนได้เลย!'}
+              </p>
+              {searchQuery && (
+                <button 
+                  onClick={() => window.location.href = '/'}
+                  className="mt-8 bg-black text-white px-8 py-3 rounded-2xl font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg"
+                >
+                  ดูบทความทั้งหมด
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
       </div>
 
-      {/* ฝั่งขวา: แถบแนะนำ */}
-     <div className="lg:col-span-4 relative lg:pl-14 px-4 md:px-8 pt-8">
+      <div className="lg:col-span-4 relative lg:pl-14 px-4 md:px-8 pt-8">
         <div className="sticky top-28">
           <RightSidebar />
         </div>

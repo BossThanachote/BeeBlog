@@ -1,91 +1,230 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Image as ImageIcon, Settings, Save } from 'lucide-react';
-import { TiptapEditor } from '@/app/components/organisms/TiptapEditor'; // อิมพอร์ต Editor เข้ามา
+import React, { useState, useEffect } from 'react'
+import { WriteEditor } from '@/app/components/organisms/WriteEditor'
+import { WritePreview } from '@/app/components/organisms/WritePreview'
+import { Loader2 } from 'lucide-react'
+import { AlertModal } from '@/app/components/molecules/AlertModal'
+import { SuccessModal } from '@/app/components/molecules/SuccessModal'
+import { createClient } from '@/utils/supabase/client'
 
-export default function WriteBlog() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState(''); // State สำหรับเก็บเนื้อหา Blog ที่พิมพ์
+export default function WriteBlogPage() {
+  // --- Shared States ---
+  const [title, setTitle] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [coverImage, setCoverImage] = useState<string>('')
+  const [content, setContent] = useState<string>('')
 
-  // ฟังก์ชันจำลองตอนกด Publish
-  const handlePublish = () => {
-    console.log("Title:", title);
-    console.log("Content HTML:", content);
-    alert("เตรียมบันทึกลง Database!");
-  };
+  const [showPreview, setShowPreview] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+  
+  // --- Modals States ---
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '' })
+  const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' })
+  const supabase = createClient()
+  // 🌟 1. ดักจับการย้อนกลับมา (Auto-Refresh) เพื่อคืนชีพ Tiptap และโหลดข้อมูล Draft
+  useEffect(() => {
+    const isReturning = sessionStorage.getItem('beeblog_returning')
+    if (isReturning === 'true') {
+      sessionStorage.removeItem('beeblog_returning')
+      window.location.reload()
+      return
+    }
+
+    const savedDraft = localStorage.getItem('beeblog_draft')
+    if (savedDraft) {
+      try {
+        const { savedTitle, savedSubtitle, savedCover, savedContent } = JSON.parse(savedDraft)
+        setTitle(savedTitle || '')
+        setSubtitle(savedSubtitle || '')
+        setCoverImage(savedCover || '')
+        setContent(savedContent || '')
+      } catch (e) {
+        console.error("Failed to load draft", e)
+      }
+    }
+    setIsLoaded(true)
+
+    return () => {
+      sessionStorage.setItem('beeblog_returning', 'true')
+    }
+  }, [])
+
+  // 🌟 2. เซฟข้อมูลอัตโนมัติ (Debounce 1 วินาที)
+  useEffect(() => {
+    if (isLoaded) {
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem('beeblog_draft', JSON.stringify({
+          savedTitle: title,
+          savedSubtitle: subtitle,
+          savedCover: coverImage,
+          savedContent: content
+        }))
+      }, 1000)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [title, subtitle, coverImage, content, isLoaded])
+
+  // 🌟 3. จัดการปุ่ม Back ของ Browser (Hash Routing #preview)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.hash !== '#preview') {
+        setShowPreview(false)
+      } else {
+        setShowPreview(true)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  // --- Helper Functions ---
+  
+  const extractImagesFromHTML = (html: string): string[] => {
+    if (typeof window === 'undefined') return [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const groups = doc.querySelectorAll('div[data-type="image-group"]');
+    const urls: string[] = [];
+    groups.forEach(g => {
+      const data = g.getAttribute('data-images');
+      if (data) {
+        try { urls.push(...JSON.parse(data)); } catch (e) { }
+      }
+    });
+    return urls;
+  }
+
+  const showError = (title: string, message: string) => {
+    setModalConfig({ isOpen: true, title, message })
+  }
+
+  // --- Action Handlers ---
+
+  const handlePrePublish = () => {
+    if (!title.trim()) {
+      showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่หัวข้อบทความก่อนครับ")
+      return
+    }
+
+    const currentImagesCount = extractImagesFromHTML(content).length;
+    if (currentImagesCount > 6) {
+      showError("รูปภาพเกินกำหนด", `คุณมีรูปภาพ ${currentImagesCount} รูป ซึ่งเกินกำหนด (สูงสุด 6 รูป) กรุณาลบออกบางส่วนก่อนครับ`)
+      return
+    }
+
+    window.history.pushState(null, '', '#preview')
+    setShowPreview(true)
+  }
+
+  const handleBackToEditor = () => {
+    window.history.back()
+  }
+
+  const handleFinalPublish = async () => {
+    if (!coverImage) return showError("ขาดรูปปก", "กรุณาอัปโหลดรูปภาพหน้าปกก่อน Publish ครับ")
+    if (!title.trim()) return showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่ Preview Title ครับ")
+
+    try {
+      // 🌟 1. ดึงข้อมูล User ปัจจุบันออกมาก่อนเพื่อเอา ID
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        showError("ไม่พบผู้ใช้งาน", "กรุณาเข้าสู่ระบบใหม่อีกครั้งก่อนทำการ Publish ครับ");
+        return;
+      }
+
+      const generatedSlug = title.trim().replace(/\s+/g, '-').replace(/[^\w\u0E00-\u0E7F-]+/g, '') + '-' + Date.now()
+      const extractedImages = extractImagesFromHTML(content);
+
+      const { error } = await supabase
+        .from('blogs')
+        .insert([
+          {
+            title: title,
+            summary: subtitle,
+            slug: generatedSlug,
+            cover_image: coverImage,
+            content: content,
+            gallery_images: extractedImages,
+            is_published: true,
+            author_id: user.id // 🌟 2. ยัด id ของคนเขียนใส่เข้าไปตรงนี้แล้วครับ!
+          }
+        ])
+
+      if (error) throw error
+
+      // 🌟 เคลียร์ Draft ทิ้งเมื่อสำเร็จ
+      localStorage.removeItem('beeblog_draft')
+      sessionStorage.removeItem('beeblog_returning')
+
+      // 🌟 เปิด Success Modal แทนการ Alert
+      setSuccessModal({
+        isOpen: true,
+        title: "Publish สำเร็จ! 🎉",
+        message: "บทความของคุณถูกเผยแพร่ลงระบบ BeeBlog เรียบร้อยแล้ว พร้อมให้ทุกคนเข้ามาอ่านแล้วครับ"
+      })
+
+    } catch (error) {
+      console.error("Publish Error:", error)
+      showError("เกิดข้อผิดพลาด", "ไม่สามารถ Publish ได้ กรุณาลองใหม่อีกครั้ง")
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-400 bg-[#fafafa]">
+        <Loader2 className="w-8 h-8 animate-spin text-yellow-400 mb-4" />
+        <p className="font-medium animate-pulse">กำลังโหลดฉบับร่าง...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-[#fafafa]">
       
-      {/* --- 1. Navbar เฉพาะกิจ (Theme BeeBlog) --- */}
-      <nav className="sticky top-0 w-full h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between z-50">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center font-bold text-black shadow-sm">B</div>
-            <span className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">BeeBlog Writer</span>
-          </Link>
-          <div className="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
-          <span className="text-sm text-gray-500 font-medium">Draft (บันทึกอัตโนมัติ)</span>
-        </div>
+      {/* ⚠️ Modal แจ้งเตือนข้อผิดพลาด */}
+      <AlertModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+      />
 
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-bold transition-colors cursor-pointer">
-            <Save className="w-4 h-4" />
-            <span className="hidden sm:block">บันทึก</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-bold transition-colors cursor-pointer">
-            <Settings className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={handlePublish}
-            className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm cursor-pointer"
-          >
-            Publish
-          </button>
-        </div>
-      </nav>
+      {/* ✅ Modal แจ้งเตือนเมื่อสำเร็จ */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        title={successModal.title}
+        message={successModal.message}
+        onConfirm={() => {
+          setSuccessModal({ ...successModal, isOpen: false })
+          window.location.href = '/' // 🚀 วาร์ปกลับหน้า Home เมื่อผู้ใช้กดรับทราบ
+        }}
+      />
 
-      {/* --- 2. พื้นที่กระดาษเขียนบล็อก (Document Layout) --- */}
-      <div className="max-w-4xl mx-auto mt-8 sm:mt-12 px-4 sm:px-0">
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 ">
-          
-          {/* โซนอัปโหลด "รูปปก" (Cover Image) - ตอบโจทย์ Assignment */}
-          <div className="h-64 sm:h-80 bg-gray-50 border-b border-gray-100 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors cursor-pointer group relative">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-4">
-              <ImageIcon className="w-8 h-8 text-yellow-500" />
-            </div>
-            <p className="font-bold text-gray-700">อัปโหลดรูปภาพปก (Cover Image)</p>
-            <p className="text-sm mt-1">แนะนำขนาด 1200 x 630 px</p>
-          </div>
-
-          <div className="p-8 sm:p-12">
-            
-            {/* Input หัวข้อ (Title) */}
-            <textarea 
-              placeholder="หัวข้อบทความของคุณ..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-4xl sm:text-5xl font-bold text-gray-900 placeholder-gray-300 border-none outline-none resize-none overflow-hidden bg-transparent mb-8"
-              rows={1}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-            />
-
-            {/* --- เรียกใช้ Tiptap Editor ที่เราสร้างไว้ --- */}
-            {/* ส่ง content เข้าไปและรับค่าใหม่กลับมาอัปเดต State */}
-            <TiptapEditor 
-              content={content} 
-              onChange={(newContent) => setContent(newContent)} 
-            />
-
-          </div>
-        </div>
-      </div>
+      {!showPreview ? (
+        <WriteEditor
+          title={title}
+          setTitle={setTitle}
+          coverImage={coverImage}
+          setCoverImage={setCoverImage}
+          content={content}
+          setContent={setContent}
+          onPrePublish={handlePrePublish}
+          onError={showError}
+        />
+      ) : (
+        <WritePreview
+          title={title}
+          setTitle={setTitle}
+          subtitle={subtitle}
+          setSubtitle={setSubtitle}
+          coverImage={coverImage}
+          setCoverImage={setCoverImage}
+          onBack={handleBackToEditor}
+          onFinalPublish={handleFinalPublish}
+        />
+      )}
     </div>
-  );
+  )
 }
