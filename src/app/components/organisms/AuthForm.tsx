@@ -11,7 +11,7 @@ export const AuthForm = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (formData: FormData) => {
+ const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
     setErrorMsg('');
     
@@ -21,9 +21,13 @@ export const AuthForm = () => {
     if (result?.error) {
       setErrorMsg(result.error);
       setIsLoading(false);
+    } else if (result?.success) {
+      // 🌟 บังคับ Hard Refresh เพื่อล้าง Cache และให้ Navbar ดึงข้อมูลใหม่
+      // วิธีนี้จะทำให้สถานะ Login อัปเดตทันที 100% ครับ
+      window.location.href = '/'; 
     }
   };
-
+  
   return (
     <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 flex flex-col h-[650px] overflow-hidden">
       
@@ -32,15 +36,15 @@ export const AuthForm = () => {
       <div className="p-8 flex-1 flex flex-col">
         
         {/* ลบกล่องแจ้งเตือน Error สีแดงตรงนี้ออกไปได้เลยครับ! */}
-
+a
         <form action={handleSubmit} className="space-y-5 flex-1 flex flex-col justify-center">
           
           {!isLogin && (
             <Input 
               label="ชื่อผู้ใช้งาน"
-              name="fullName"
+              name="username"
               type="text"
-              placeholder="เช่น Boss Thanachote"
+              placeholder="เช่น BeeUser"
               icon={User}
               required={!isLogin}
               // ส่ง Error มาแสดงตรงนี้เฉพาะตอนอยู่หน้า สมัครสมาชิก
