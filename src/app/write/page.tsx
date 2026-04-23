@@ -49,7 +49,7 @@ export default function WriteBlog() {
 
       {/* --- 2. พื้นที่กระดาษเขียนบล็อก (Document Layout) --- */}
       <div className="max-w-4xl mx-auto mt-8 sm:mt-12 px-4 sm:px-0">
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 ">
           
           {/* โซนอัปโหลด "รูปปก" (Cover Image) - ตอบโจทย์ Assignment */}
           <div className="h-64 sm:h-80 bg-gray-50 border-b border-gray-100 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors cursor-pointer group relative">

@@ -96,10 +96,10 @@ export const Navbar = ({ onToggleSidebar }: NavbarProps) => {
 
       <div className="flex items-center gap-3">
         {/* ปุ่มเขียน Blog */}
-        <button className="p-2 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 rounded-full transition-all md:flex items-center gap-2 cursor-pointer">
+        <Link href="/write" className="p-2 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 rounded-full transition-all md:flex items-center gap-2 cursor-pointer">
           <PenSquare className="w-5 h-5" />
           <span className="hidden lg:block font-medium text-sm">เขียน Blog</span>
-        </button>
+        </Link>
         
         {/* ปุ่มแจ้งเตือน */}
         <button className="p-2 text-gray-600 hover:bg-yellow-50 hover:text-yellow-700 rounded-full relative cursor-pointer">
