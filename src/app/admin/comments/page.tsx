@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, Suspense } from 'react' // 🌟 เพิ่ม Suspense
 import { createClient } from '@/utils/supabase/client'
 import {
     MessageSquare,
     CheckCircle2,
-    XCircle,
     Trash2,
     Clock,
     ExternalLink,
@@ -14,23 +13,23 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function AdminCommentsPage() {
+// 🌟 แยกส่วนเนื้อหาหลักออกมาเป็น Component ย่อย
+function AdminCommentsContent() {
     const supabase = createClient()
     const [comments, setComments] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
 
-    // 🌟 1. ดึงข้อมูลคอมเมนต์ พร้อมชื่อบทความที่คอมเมนต์นั้นอยู่
     const fetchComments = useCallback(async () => {
         try {
             setIsLoading(true)
             const { data, error } = await supabase
                 .from('comments')
                 .select(`
-          *,
-          blogs (title, slug),
-          users (avatar_url)
-        `)
+                  *,
+                  blogs (title, slug),
+                  users (avatar_url)
+                `)
                 .eq('status', filter)
                 .order('created_at', { ascending: false })
 
@@ -47,28 +46,23 @@ export default function AdminCommentsPage() {
         fetchComments()
     }, [fetchComments])
 
-    // 🌟 2. ฟังก์ชันอนุมัติคอมเมนต์
     const handleApprove = async (id: string) => {
         try {
-            const { error } = await supabase // 🌟 ต้องมี await ตรงนี้
+            const { error } = await supabase
                 .from('comments')
                 .update({ status: 'approved' })
                 .eq('id', id)
 
             if (error) {
-                console.error("Update Error:", error.message)
                 alert("อนุมัติไม่สำเร็จ: " + error.message)
                 return
             }
-
-            // ถ้าสำเร็จค่อยเอาออกจากหน้าจอ
             setComments(prev => prev.filter(c => c.id !== id))
         } catch (err) {
             console.error("System Error:", err)
         }
     }
 
-    // 🌟 3. ฟังก์ชันลบคอมเมนต์ (Reject)
     const handleDelete = async (id: string) => {
         if (!confirm('คุณแน่ใจนะว่าจะลบ/ปฏิเสธคอมเมนต์นี้?')) return
         const { error } = await supabase.from('comments').delete().eq('id', id)
@@ -87,7 +81,7 @@ export default function AdminCommentsPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Comment Approval</h1>
-                        <p className="text-gray-500 font-medium">จัดการความคิดเห็นจากผู้อ่าน BeeBlog</p>
+                        <p className="text-gray-500 font-medium text-sm">จัดการความคิดเห็นจากผู้อ่าน BeeBlog</p>
                     </div>
                 </div>
 
@@ -130,7 +124,7 @@ export default function AdminCommentsPage() {
                                         {comment.users?.avatar_url ? (
                                             <img src={comment.users.avatar_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <span className="font-black text-gray-400 uppercase text-xs">{comment.sender_name.substring(0, 2)}</span>
+                                            <span className="font-black text-gray-400 uppercase text-xs">{comment.sender_name?.substring(0, 2)}</span>
                                         )}
                                     </div>
                                     <div className="md:w-32">
@@ -174,8 +168,8 @@ export default function AdminCommentsPage() {
                                     <button
                                         onClick={() => handleDelete(comment.id)}
                                         className={`flex items-center justify-center gap-2 font-black px-6 py-3 rounded-2xl transition-all active:scale-95 shadow-sm ${filter === 'pending'
-                                                ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
-                                                : 'bg-gray-100 text-gray-400 hover:bg-red-500 hover:text-white'
+                                            ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
+                                            : 'bg-gray-100 text-gray-400 hover:bg-red-500 hover:text-white'
                                             }`}
                                     >
                                         <Trash2 className="w-5 h-5" /> {filter === 'pending' ? 'Reject' : 'Delete'}
@@ -192,5 +186,18 @@ export default function AdminCommentsPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+// 🌟 Export หลักที่ห่อด้วย Suspense เพื่อให้ Build ผ่าน
+export default function AdminCommentsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-yellow-400" />
+            </div>
+        }>
+            <AdminCommentsContent />
+        </Suspense>
     )
 }

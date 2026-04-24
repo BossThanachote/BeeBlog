@@ -1,30 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { BlogCard } from '@/app/components/organisms/BlogCard';
 import { RightSidebar } from '@/app/components/organisms/RightSidebar';
-import { Blog } from '@/app/types';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client'; 
-import { Loader2, SearchX, X, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Loader2, SearchX, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 
-const ITEMS_PER_PAGE = 10;
-
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'following'>('feed'); // 🌟 เปลี่ยนชื่อแท็บ
+// 🌟 สร้าง Component ย่อยเพื่อแยกส่วนที่ใช้ useSearchParams
+function HomeContent() {
+  const [activeTab, setActiveTab] = useState<'feed' | 'following'>('feed');
   const [blogs, setBlogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+  const ITEMS_PER_PAGE = 10;
+
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
   
   const supabase = createClient(); 
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  // รีเซ็ตหน้าเมื่อเปลี่ยนแท็บหรือค้นหา
   useEffect(() => {
     setPage(1);
   }, [searchQuery, activeTab]);
@@ -46,7 +44,6 @@ export default function Home() {
         `, { count: 'exact' }) 
         .eq('is_published', true);
 
-      // 🌟 Logic สำหรับแท็บ Following (ดึงเฉพาะคนที่ติดตาม)
       if (activeTab === 'following') {
         if (!user) {
           setBlogs([]);
@@ -55,7 +52,6 @@ export default function Home() {
           return;
         }
 
-        // 1. หา ID ของทุกคนที่เราติดตามอยู่
         const { data: followData } = await supabase
           .from('follows')
           .select('following_id')
@@ -64,10 +60,8 @@ export default function Home() {
         const followingIds = followData?.map((f: any) => f.following_id) || [];
 
         if (followingIds.length > 0) {
-          // 2. กรองบทความที่เขียนโดย ID เหล่านั้น
           query = query.in('author_id', followingIds);
         } else {
-          // ถ้าไม่ได้ติดตามใครเลย ให้บทความออกมาว่างเปล่า
           setBlogs([]);
           setTotalPages(0);
           setIsLoading(false);
@@ -75,7 +69,6 @@ export default function Home() {
         }
       }
 
-      // Logic ค้นหา
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%`);
       }
@@ -115,11 +108,9 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 w-full max-w-6xl mx-auto min-h-[calc(100vh-4rem)]">
-      
       <div className="lg:col-span-8 px-4 md:px-8 pt-8 lg:pr-14 lg:border-r lg:border-gray-100">
         
-        {/* Search Result Bar ... เหมือนเดิม */}
-
+        {/* Tab Switcher */}
         <div className="sticky top-16 bg-white/80 backdrop-blur-md z-20 flex border-b border-gray-200 mb-6 pt-4">
           <button 
             onClick={() => setActiveTab('feed')}
@@ -155,7 +146,26 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Pagination UI ... เหมือนเดิม */}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-10">
+                  <button 
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm font-bold">หน้า {page} จาก {totalPages}</span>
+                  <button 
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-24 text-center px-4">
@@ -180,7 +190,19 @@ export default function Home() {
           <RightSidebar />
         </div>
       </div>
-      
     </div>
+  );
+}
+
+// 🌟 ฟังก์ชันหลัก Home ที่ห่อด้วย Suspense
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-10 h-10 animate-spin text-yellow-400" />
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Blog } from '@/app/types'
 import { 
@@ -18,9 +18,10 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function AdminManageBlogs() {
+// 🌟 ส่วนเนื้อหาหลักที่ทำงานกับ Data และ Client-side Hooks
+function AdminManageBlogsContent() {
   const supabase = createClient()
-  const [blogs, setBlogs] = useState<Partial<Blog>[]>([]) // ใช้ Partial เพราะเราจะดึงไม่ครบทุกฟิลด์
+  const [blogs, setBlogs] = useState<Partial<Blog>[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   
@@ -35,7 +36,6 @@ export default function AdminManageBlogs() {
       const start = (currentPage - 1) * itemsPerPage
       const end = start + itemsPerPage - 1
 
-      // 🌟 Optimization: ดึงเฉพาะฟิลด์ที่ต้องใช้โชว์ในตาราง (ไม่ดึง content ที่หนักๆ มา)
       let query = supabase
         .from('blogs')
         .select('id, title, slug, cover_image, is_published, view_count, created_at', { count: 'exact' })
@@ -82,7 +82,7 @@ export default function AdminManageBlogs() {
     try {
       const { error } = await supabase.from('blogs').delete().eq('id', id)
       if (error) throw error
-      fetchBlogs() // โหลดข้อมูลใหม่
+      fetchBlogs()
     } catch (err) {
       alert('ลบไม่สำเร็จครับ')
     }
@@ -98,7 +98,7 @@ export default function AdminManageBlogs() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Manage Blogs</h1>
-            <p className="text-gray-500 font-medium">จัดการและแก้ไขบทความทั้งหมดในระบบ</p>
+            <p className="text-gray-500 font-medium text-sm">จัดการและแก้ไขบทความทั้งหมดในระบบ</p>
           </div>
         </div>
         <Link 
@@ -119,7 +119,7 @@ export default function AdminManageBlogs() {
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value)
-            setCurrentPage(1) // รีเซ็ตหน้ากลับไปที่ 1 เมื่อค้นหา
+            setCurrentPage(1)
           }}
         />
       </div>
@@ -152,13 +152,13 @@ export default function AdminManageBlogs() {
                         <div className="w-20 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-100 shadow-sm">
                           <img src={blog.cover_image} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                         </div>
-                        <div className="max-w-xs md:max-w-md">
+                        <div className="max-w-xs md:max-w-md overflow-hidden">
                           <h3 className="font-bold text-gray-900 truncate group-hover:text-yellow-600 transition-colors">{blog.title}</h3>
                           <div className="flex items-center gap-2 mt-1.5 text-[11px] text-gray-400">
                             <Calendar className="w-3 h-3" />
                             <span>{new Date(blog.created_at!).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                             <span className="text-gray-200">|</span>
-                            <span className="font-mono">{blog.slug}</span>
+                            <span className="font-mono truncate">{blog.slug}</span>
                           </div>
                         </div>
                       </div>
@@ -186,21 +186,18 @@ export default function AdminManageBlogs() {
                         <Link 
                           href={`/blog/${blog.slug}`}
                           className="p-2.5 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-xl transition-all"
-                          title="View"
                         >
                           <Eye className="w-5 h-5" />
                         </Link>
                         <Link 
                           href={`/admin/blogs/edit/${blog.id}`}
                           className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
-                          title="Edit"
                         >
                           <FileEdit className="w-5 h-5" />
                         </Link>
                         <button 
                           onClick={() => handleDelete(blog.id!)}
                           className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                          title="Delete"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -233,14 +230,14 @@ export default function AdminManageBlogs() {
             <button 
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
-              className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white disabled:hover:text-gray-600 transition-all shadow-sm active:scale-90"
+              className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white transition-all shadow-sm active:scale-90"
             >
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
             <button 
               disabled={currentPage * itemsPerPage >= totalCount}
               onClick={() => setCurrentPage(prev => prev + 1)}
-              className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white disabled:hover:text-gray-600 transition-all shadow-sm active:scale-90"
+              className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white transition-all shadow-sm active:scale-90"
             >
               <ChevronRight className="w-5 h-5 stroke-[2.5]" />
             </button>
@@ -248,5 +245,18 @@ export default function AdminManageBlogs() {
         </div>
       </div>
     </div>
+  )
+}
+
+// 🌟 Export หลักที่ห่อด้วย Suspense เพื่อให้ build ผ่านฉลุย
+export default function AdminManageBlogs() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-yellow-400" />
+      </div>
+    }>
+      <AdminManageBlogsContent />
+    </Suspense>
   )
 }
