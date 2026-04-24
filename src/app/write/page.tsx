@@ -126,7 +126,7 @@ export default function WriteBlogPage() {
     if (!title.trim()) return showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่ Preview Title ครับ")
 
     try {
-      // 🌟 1. ดึงข้อมูล User ปัจจุบันออกมาก่อนเพื่อเอา ID
+      // 1. ดึงข้อมูล User
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
@@ -137,6 +137,43 @@ export default function WriteBlogPage() {
       const generatedSlug = title.trim().replace(/\s+/g, '-').replace(/[^\w\u0E00-\u0E7F-]+/g, '') + '-' + Date.now()
       const extractedImages = extractImagesFromHTML(content);
 
+      // 🌟🌟🌟 ส่วนที่เพิ่มเข้ามา: แปลง HTML เสกแท็ก <img> เข้าไปในเนื้อหา 🌟🌟🌟
+      let finalHTMLContent = content;
+      
+      if (typeof window !== 'undefined') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        const groups = doc.querySelectorAll('div[data-type="image-group"]');
+        
+        groups.forEach(g => {
+          const data = g.getAttribute('data-images');
+          if (data) {
+            try {
+              // ถอดรหัสกลับมาเป็น Array ของ URL
+              const decodedStr = data.replace(/&quot;/g, '"');
+              const urls = JSON.parse(decodedStr);
+              
+              g.innerHTML = ''; // เคลียร์ข้อความเก่าทิ้ง
+              
+              // วนลูปสร้างแท็ก <img> ใส่กรอบ <div> ตามที่ CSS หน้าอ่านบทความต้องการ
+              urls.forEach((url: string) => {
+                const imgWrapper = doc.createElement('div');
+                const img = doc.createElement('img');
+                img.src = url;
+                imgWrapper.appendChild(img);
+                g.appendChild(imgWrapper);
+              });
+            } catch (e) {
+              console.error("Failed to parse image data", e);
+            }
+          }
+        });
+        
+        finalHTMLContent = doc.body.innerHTML; // เอา HTML ที่สมบูรณ์แบบพร้อมใช้งาน
+      }
+      // 🌟🌟🌟 สิ้นสุดการแปลง HTML 🌟🌟🌟
+
+      // 2. เซฟลง Database
       const { error } = await supabase
         .from('blogs')
         .insert([
@@ -145,20 +182,19 @@ export default function WriteBlogPage() {
             summary: subtitle,
             slug: generatedSlug,
             cover_image: coverImage,
-            content: content,
+            content: finalHTMLContent, // 🌟 ใช้ตัวแปร finalHTMLContent แทน content เดิม!
             gallery_images: extractedImages,
             is_published: true,
-            author_id: user.id // 🌟 2. ยัด id ของคนเขียนใส่เข้าไปตรงนี้แล้วครับ!
+            author_id: user.id 
           }
         ])
 
       if (error) throw error
 
-      // 🌟 เคลียร์ Draft ทิ้งเมื่อสำเร็จ
+      // 3. เคลียร์ Draft ทิ้งเมื่อสำเร็จ
       localStorage.removeItem('beeblog_draft')
       sessionStorage.removeItem('beeblog_returning')
 
-      // 🌟 เปิด Success Modal แทนการ Alert
       setSuccessModal({
         isOpen: true,
         title: "Publish สำเร็จ! 🎉",

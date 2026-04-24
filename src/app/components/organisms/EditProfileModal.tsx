@@ -128,6 +128,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
       
       onSaved() // สั่งให้หน้าหลักดึงข้อมูลใหม่
       onClose() // ปิดหน้าต่าง
+      window.dispatchEvent(new Event('profileUpdated'))
     } catch (error) {
       console.error("Error updating profile:", error)
       alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลครับ")

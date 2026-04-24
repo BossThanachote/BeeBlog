@@ -87,8 +87,17 @@ export const Navbar = ({ onToggleSidebar }: NavbarProps) => {
 
     fetchUserData()
 
+    const handleProfileUpdate = () => {
+      fetchUserData()
+    }
+
+    // 🌟 3. ติดตั้งหูฟัง รอรับ Event ชื่อ 'profileUpdated'
+    window.addEventListener('profileUpdated', handleProfileUpdate)
+
     return () => {
       isMounted = false
+      // 🌟 4. ถอดหูฟังออกเมื่อ Navbar ถูกทำลายทิ้ง (กันบัคความจำรั่วไหล)
+      window.removeEventListener('profileUpdated', handleProfileUpdate)
     }
   }, [user?.id, supabase])
 

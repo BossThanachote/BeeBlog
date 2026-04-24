@@ -9,6 +9,9 @@ export interface Blog {
   gallery_images?: string[];
   is_published: boolean;
   
+  // avatar_url ตรงนี้คือของตาราง blogs (ถ้ามี)
+  avatar_url?: string | null; 
+  
   view_count?: number; 
   created_at: string;
   updated_at?: string;
@@ -16,9 +19,11 @@ export interface Blog {
   likes?: number;
   comments?: number;
 
-  // 🌟 เพิ่มแค่ก้อนนี้ก้อนเดียวครับ เพื่อรองรับการ Join ตาราง users (ของเก่าอยู่ครบ 100%)
+  // 🌟 ต้องเพิ่มเข้าไปในก้อน users ตรงนี้ด้วยครับ 
+  // เพื่อให้ TypeScript รู้จักตอนเราเรียก blog.users.avatar_url
   users?: {
     username: string;
+    avatar_url: string | null; // <-- เพิ่มบรรทัดนี้เข้าไปครับ
   };
 }
 
