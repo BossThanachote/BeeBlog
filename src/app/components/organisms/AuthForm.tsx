@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Mail, Lock, User } from 'lucide-react';
-import { Input } from '@/app/components/atoms/Input';
-import { AuthHeader } from '@/app/components/molecules/AuthHeader';
+import { Input } from '../atoms/Input';
+import { AuthHeader } from '../molecules/AuthHeader';
 import { login, signup } from '@/app/login/actions';
 
 export const AuthForm = () => {

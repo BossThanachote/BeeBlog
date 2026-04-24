@@ -21,3 +21,15 @@ export interface Blog {
     username: string;
   };
 }
+
+interface UserProfile {
+  id: string
+  email: string
+  username: string
+  avatar_url: string | null
+  bio: string | null
+  about_me: string | null
+  pronouns: string | null
+  role: string | null
+  created_at: string
+}

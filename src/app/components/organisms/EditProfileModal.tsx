@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X, Loader2, Upload } from 'lucide-react'
+import { X, Loader2, Upload, Image as ImageIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 interface EditProfileModalProps {
@@ -14,6 +14,8 @@ interface EditProfileModalProps {
 export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: EditProfileModalProps) => {
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
   
   // States สำหรับเก็บค่าในฟอร์ม
   const [username, setUsername] = useState('')
@@ -33,6 +35,82 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
 
   if (!isOpen) return null
 
+  // ── ส่วนจัดการ Drag & Drop ──────────────────────────
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await uploadImage(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    if (e.target.files && e.target.files[0]) {
+      await uploadImage(e.target.files[0])
+    }
+  }
+
+  // ── ส่วนจัดการ Upload รูปขึ้น Supabase ────────────────
+  const uploadImage = async (file: File) => {
+    try {
+      // 1. ตรวจสอบว่าเป็นไฟล์รูปภาพเท่านั้น
+      if (!file.type.startsWith('image/')) {
+        alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้นครับ')
+        return
+      }
+      
+      // 2. ตรวจสอบขนาดไฟล์ (เช่น ไม่เกิน 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('ขนาดไฟล์ต้องไม่เกิน 5MB ครับ')
+        return
+      }
+
+      setIsUploadingImage(true)
+
+      // 3. สร้างชื่อไฟล์ให้ไม่ซ้ำกัน (ใช้ userId + เวลาปัจจุบัน)
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`
+      const filePath = `${fileName}`
+
+      // 4. อัปโหลดขึ้น Bucket 'avatars'
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { 
+          upsert: true, // ทับไฟล์เดิมได้
+          cacheControl: '3600'
+        })
+
+      if (uploadError) throw uploadError
+
+      // 5. ดึง Public URL กลับมาแสดงผล
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // 6. อัปเดต State ให้โชว์รูปใหม่ทันที
+      setAvatarUrl(publicUrl)
+
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพครับ")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
+  // ── ส่วนบันทึกข้อมูล Profile ──────────────────────────
   const handleSave = async () => {
     try {
       setIsLoading(true)
@@ -42,7 +120,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           username: username,
           pronouns: pronouns,
           bio: bio,
-          avatar_url: avatarUrl
+          avatar_url: avatarUrl // บันทึก URL ใหม่ลง Database
         })
         .eq('id', currentUser.id)
 
@@ -70,28 +148,59 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
         <h2 className="text-2xl font-black text-gray-900 mb-6">Profile information</h2>
 
         <div className="space-y-6">
-          {/* Photo Section */}
+          {/* 🌟 Photo Section (อัปเดตใหม่) */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Photo</label>
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden border border-gray-200 shrink-0">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              
+              {/* Avatar Preview */}
+              <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden border-4 border-white shadow-md shrink-0 relative group">
                 <img 
                   src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`} 
                   alt="Avatar Preview" 
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full object-cover transition-opacity ${isUploadingImage ? 'opacity-50' : 'opacity-100'}`}
                 />
+                {isUploadingImage && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+                  </div>
+                )}
               </div>
-              <div className="flex-1">
-                {/* อนาคตสามารถทำระบบ Upload รูปจริงได้ ตอนนี้ให้ใส่ URL ไปก่อนเพื่อความง่ายครับ */}
+
+              {/* Drag & Drop Zone */}
+              <div 
+                className={`flex-1 w-full relative border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-200 ${
+                  dragActive 
+                    ? 'border-yellow-400 bg-yellow-50' 
+                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
                 <input 
-                  type="text" 
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="วาง URL รูปภาพโปรไฟล์ของคุณที่นี่..."
-                  className="w-full text-sm p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 outline-none"
+                  type="file" 
+                  accept="image/png, image/jpeg, image/webp" 
+                  onChange={handleChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  disabled={isUploadingImage}
                 />
-                <p className="text-xs text-gray-500 mt-2">Recommended: Square image, or leave blank to use random avatar.</p>
+                <div className="flex flex-col items-center justify-center gap-2 pointer-events-none">
+                  {isUploadingImage ? (
+                    <p className="text-sm font-medium text-yellow-600">กำลังอัปโหลด...</p>
+                  ) : (
+                    <>
+                      <Upload className={`w-6 h-6 ${dragActive ? 'text-yellow-500' : 'text-gray-400'}`} />
+                      <p className="text-sm text-gray-600">
+                        <span className="font-bold text-gray-900">คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวาง
+                      </p>
+                      <p className="text-[10px] text-gray-400">รองรับ JPEG, PNG, WEBP (สูงสุด 5MB)</p>
+                    </>
+                  )}
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -140,7 +249,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           </button>
           <button 
             onClick={handleSave} 
-            disabled={isLoading || !username}
+            disabled={isLoading || !username || isUploadingImage}
             className="px-6 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

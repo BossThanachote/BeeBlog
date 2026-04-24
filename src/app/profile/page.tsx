@@ -1,90 +1,107 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Loader2, Edit3, MoreHorizontal } from 'lucide-react'
-import { Navbar } from '@/app/components/organisms/Navbar'
 import { EditProfileModal } from '@/app/components/organisms/EditProfileModal'
+// 🌟 1. Import useAuth เข้ามาใช้งาน
+import { useAuth } from '@/app/providers/AuthProvider'
 
 export default function ProfilePage() {
   const supabase = createClient()
-  const [userProfile, setUserProfile] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
   
-  // States สำหรับควบคุม UI
+  // 🌟 2. ดึงข้อมูล user และสถานะโหลดจาก AuthProvider
+  const { user, isLoading: isAuthLoading } = useAuth()
+
+  const [userProfile, setUserProfile] = useState<any>(null)
+  const [isProfileLoading, setIsProfileLoading] = useState(true) // เปลี่ยนชื่อ state นิดหน่อยเพื่อไม่ให้สับสนกับ isAuthLoading
+  const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'home' | 'about'>('about')
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isEditingAbout, setIsEditingAbout] = useState(false)
   const [aboutMeContent, setAboutMeContent] = useState('')
 
-  const fetchProfile = async () => {
-    try {
-      setIsLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          
-        if (error) throw error
-        setUserProfile(data)
-        setAboutMeContent(data.about_me || '')
-      } else {
-        window.location.href = '/login' // ถ้ายังไม่ Login ให้เตะกลับ
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error)
-    } finally {
-      setIsLoading(false)
+  const fetchProfile = useCallback(async () => {
+    // 🌟 3. ถ้าระบบ Auth ยังโหลดไม่เสร็จ ให้รอไปก่อน อย่าเพิ่งทำอะไร
+    if (isAuthLoading) return
+
+    // 🌟 4. ถ้าโหลด Auth เสร็จแล้วแต่ไม่มี user แปลว่าไม่ได้ล็อกอิน ให้เด้งไปหน้า login
+    if (!user) {
+      window.location.href = '/login'
+      return
     }
-  }
+
+    try {
+      setIsProfileLoading(true)
+      
+      // 🌟 5. ดึงข้อมูลจากตาราง users ได้เลย เพราะเรารู้ ID ของ user ชัวร์ๆ แล้ว
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) throw error
+      
+      setUserProfile(data)
+      setAboutMeContent(data.about_me || '')
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    } finally {
+      setIsProfileLoading(false)
+    }
+  }, [user, isAuthLoading, supabase])
 
   useEffect(() => {
     fetchProfile()
-  }, [])
+  }, [fetchProfile])
 
   const handleSaveAboutMe = async () => {
+    if (!userProfile) return
     try {
-      setIsLoading(true)
-      await supabase
+      setIsSaving(true)
+      const { error } = await supabase
         .from('users')
         .update({ about_me: aboutMeContent })
         .eq('id', userProfile.id)
+      if (error) throw error
       
       setIsEditingAbout(false)
-      fetchProfile() // รีเฟรชข้อมูล
+      await fetchProfile()
     } catch (error) {
-      console.error("Save error:", error)
+      console.error('Save error:', error)
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
-  if (isLoading && !userProfile) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>
+  // ── Loading state ──
+  // โชว์ Loader ตอนที่ Auth กำลังเช็ค หรือ กำลังดึงข้อมูล Profile
+  if ((isAuthLoading || isProfileLoading) && !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+      </div>
+    )
   }
 
   if (!userProfile) return null
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
 
-      <EditProfileModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         currentUser={userProfile}
         onSaved={fetchProfile} // เซฟเสร็จให้โหลดข้อมูลใหม่
       />
 
       <div className="max-w-6xl mx-auto pt-24 px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
+
         {/* 🌟 ฝั่งซ้าย: เนื้อหาหลัก (Tabs & About) */}
         <div className="lg:col-span-8 md:pr-8">
-          
+
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-black text-gray-900">{userProfile.username}</h1>
             <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors hidden md:block">
@@ -94,14 +111,14 @@ export default function ProfilePage() {
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200 mb-8">
-            <button 
+            <button
               onClick={() => setActiveTab('home')}
               className={`pb-4 px-2 mr-6 font-bold transition-all relative ${activeTab === 'home' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Home
               {activeTab === 'home' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />}
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('about')}
               className={`pb-4 px-2 font-bold transition-all relative ${activeTab === 'about' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
             >
@@ -124,15 +141,14 @@ export default function ProfilePage() {
                   /* ✏️ โหมดแก้ไข About Me */
                   <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
                     <p className="text-sm font-bold text-gray-700 mb-4">เขียนเรื่องราวเกี่ยวกับตัวคุณ...</p>
-                    
-                    {/* 💡 Note: ถ้าอยากใช้ WriteEditor (Tiptap) ของคุณ Boss สามารถเอามาแปะแทน textarea นี้ได้เลยครับ! */}
-                    <textarea 
+
+                    <textarea
                       value={aboutMeContent}
                       onChange={(e) => setAboutMeContent(e.target.value)}
                       className="w-full min-h-[200px] p-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-yellow-400 outline-none resize-none mb-4"
                       placeholder="เล่าเรื่องราวของคุณให้โลกฟัง..."
                     />
-                    
+
                     <div className="flex justify-end gap-3">
                       <button onClick={() => setIsEditingAbout(false)} className="px-6 py-2 rounded-xl text-gray-500 font-bold hover:bg-gray-200 transition-colors">
                         Cancel
@@ -147,13 +163,12 @@ export default function ProfilePage() {
                   <div className="relative group min-h-[200px]">
                     {userProfile.about_me ? (
                       <div className="prose prose-lg prose-yellow max-w-none prose-p:text-gray-600">
-                        {/* ถ้าใช้ Tiptap สามารถใช้ dangerouslySetInnerHTML ได้ครับ */}
                         <p className="whitespace-pre-wrap">{userProfile.about_me}</p>
                       </div>
                     ) : (
                       <div className="bg-gray-50 border border-dashed border-gray-300 rounded-3xl p-12 text-center">
                         <p className="text-gray-500 mb-4">คุณยังไม่ได้เขียนอธิบายเกี่ยวกับตัวเองเลย</p>
-                        <button 
+                        <button
                           onClick={() => setIsEditingAbout(true)}
                           className="px-6 py-2 bg-yellow-400 text-black font-bold rounded-full hover:bg-yellow-500 transition-colors shadow-sm"
                         >
@@ -161,10 +176,10 @@ export default function ProfilePage() {
                         </button>
                       </div>
                     )}
-                    
-                    {/* ปุ่มแก้ไขโผล่มาตอน Hover (สไตล์ Medium) */}
+
+                    {/* ปุ่มแก้ไขโผล่มาตอน Hover */}
                     {userProfile.about_me && (
-                      <button 
+                      <button
                         onClick={() => setIsEditingAbout(true)}
                         className="absolute top-0 right-0 p-2 bg-white border border-gray-200 shadow-sm rounded-full text-gray-500 hover:text-black opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 -translate-y-4"
                       >
@@ -182,13 +197,13 @@ export default function ProfilePage() {
         <div className="lg:col-span-4 lg:pl-8 lg:border-l lg:border-gray-100">
           <div className="sticky top-28">
             <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden border-2 border-gray-100 mb-4 shadow-sm">
-              <img 
-                src={userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.username}`} 
-                alt="Profile" 
+              <img
+                src={userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.username}`}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
-            
+
             <div className="flex items-center gap-2 mb-4">
               <h2 className="text-xl font-black text-gray-900">{userProfile.username}</h2>
               {userProfile.pronouns && (
@@ -202,7 +217,7 @@ export default function ProfilePage() {
               {userProfile.bio || "ยังไม่มีคำอธิบาย Bio"}
             </p>
 
-            <button 
+            <button
               onClick={() => setIsEditModalOpen(true)}
               className="text-sm font-bold text-green-600 hover:text-green-700 transition-colors hover:underline"
             >

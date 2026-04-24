@@ -5,9 +5,10 @@ import { BlogCard } from '@/app/components/organisms/BlogCard';
 import { RightSidebar } from '@/app/components/organisms/RightSidebar';
 import { Blog } from '@/app/types';
 import { useSearchParams } from 'next/navigation';
-// 🌟 1. เปลี่ยนวิธี Import Supabase ให้เหมือน Navbar
 import { createClient } from '@/utils/supabase/client'; 
 import { Loader2, SearchX, X } from 'lucide-react';
+// 🌟 1. Import useAuth เข้ามาใช้งาน
+import { useAuth } from '@/app/providers/AuthProvider';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'feed' | 'followed'>('feed');
@@ -17,8 +18,10 @@ export default function Home() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
   
-  // 🌟 2. เรียกใช้ Client ที่เป็น Singleton
   const supabase = createClient(); 
+
+  // 🌟 2. ดึงสถานะ Loading ของระบบ Auth มาเช็ค
+  const { isLoading: isAuthLoading } = useAuth();
 
   const fetchBlogs = async () => {
     try {
@@ -26,7 +29,6 @@ export default function Home() {
       
       let query = supabase
         .from('blogs')
-        // 🌟 เปลี่ยนตรงนี้: สั่งให้ดึง column ทั้งหมดของ blogs และขอ username จากตาราง users ด้วย
         .select('*, users(username)') 
         .eq('is_published', true);
 
@@ -46,8 +48,12 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // 🌟 3. ถ้าระบบ Auth ยังเตรียมตัวไม่เสร็จ ให้รอไปก่อน (แทนการตั้งเวลาตายตัว 1000ms)
+    if (isAuthLoading) return;
+
+    // พอ Auth โหลดเสร็จปุ๊บ สั่งดึงข้อมูลบล็อกได้เลยทันที!
     fetchBlogs();
-  }, [searchQuery]); // ลบ supabase ออกจาก dependency เพื่อลดการ fetch ซ้ำซ้อน
+  }, [searchQuery, isAuthLoading]); // เพิ่ม isAuthLoading เข้าไปใน Dependency
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 w-full max-w-6xl mx-auto min-h-[calc(100vh-4rem)]">
@@ -97,7 +103,8 @@ export default function Home() {
         </div>
 
         <div className="space-y-6 pb-20">
-          {isLoading ? (
+          {/* โชว์ Loading หาก Auth ยังไม่เสร็จ หรือกำลังดึงข้อมูล Blog */}
+          {isLoading || isAuthLoading ? (
             <div className="flex flex-col items-center py-20 text-gray-400">
               <Loader2 className="w-10 h-10 animate-spin text-yellow-400 mb-4" />
               <p className="font-medium animate-pulse">กำลังค้นหาบทความที่คุณต้องการ...</p>
