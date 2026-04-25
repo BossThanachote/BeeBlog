@@ -1,6 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr'
-
-// สร้างตัวแปรเก็บไว้ด้านนอก
 let client: ReturnType<typeof createBrowserClient> | undefined
 
 export function createClient() {

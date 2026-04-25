@@ -14,15 +14,15 @@ export default function AdminDashboardUI() {
         </div>
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Admin Control Center</h1>
-          <p className="text-gray-500 font-medium mt-0.5">ยินดีต้อนรับครับเลือกจัดการระบบ BeeBlog ได้เลย</p>
+          <p className="text-gray-500 font-medium mt-0.5">ยินดีต้อนรับเลือกจัดการระบบ BeeBlog </p>
         </div>
       </div>
 
       {/* Grid Menu */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Manage Blogs Card */}
-        <Link 
-          href="/admin/blogs" 
+        <Link
+          href="/admin/blogs"
           className="p-10 bg-white border border-gray-100 rounded-[3rem] hover:shadow-2xl hover:shadow-yellow-100/50 hover:border-yellow-200 transition-all duration-500 group relative overflow-hidden"
         >
           <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:bg-yellow-400 group-hover:rotate-6 transition-all duration-500">
@@ -39,8 +39,8 @@ export default function AdminDashboardUI() {
         </Link>
 
         {/* Comment Approval Card */}
-        <Link 
-          href="/admin/comments" 
+        <Link
+          href="/admin/comments"
           className="p-10 bg-white border border-gray-100 rounded-[3rem] hover:shadow-2xl hover:shadow-yellow-100/50 hover:border-yellow-200 transition-all duration-500 group relative overflow-hidden"
         >
           <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:bg-yellow-400 group-hover:-rotate-6 transition-all duration-500">

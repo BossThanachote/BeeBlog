@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, Suspense } from 'react' // 🌟 เพิ่ม Suspense
+import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { Menu, Search, PenSquare, Bell, LogOut, Settings, HelpCircle, X, LogIn } from 'lucide-react'
 import { logout } from '@/app/login/actions'
 import { createClient } from '@/utils/supabase/client'
@@ -23,10 +23,10 @@ const maskEmail = (email: string) => {
   return `${visiblePart}${maskedPart}@${domain}`
 }
 
-// 🌟 1. แยกเนื้อหา Navbar ออกมาเป็น Component ย่อย
+// แยกเนื้อหา Navbar ออกมาเป็น Component ย่อย
 const NavbarContent = ({ onToggleSidebar }: NavbarProps) => {
   const router = useRouter()
-  const searchParams = useSearchParams() // 👈 ตัวเจ้าปัญหาที่ทำให้ Build ไม่ผ่าน
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const { user, isLoading: isAuthLoading } = useAuth()
@@ -209,7 +209,7 @@ const NavbarContent = ({ onToggleSidebar }: NavbarProps) => {
   )
 }
 
-// 🌟 2. ตัว Export หลักที่ห่อด้วย Suspense
+// ตัว Export หลักที่ห่อด้วย Suspense
 export const Navbar = (props: NavbarProps) => {
   return (
     <Suspense fallback={

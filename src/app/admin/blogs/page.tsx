@@ -3,14 +3,14 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Blog } from '@/app/types'
-import { 
-  FileEdit, 
-  Search, 
-  Plus, 
-  Eye, 
-  Trash2, 
-  Globe, 
-  Lock, 
+import {
+  FileEdit,
+  Search,
+  Plus,
+  Eye,
+  Trash2,
+  Globe,
+  Lock,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -18,13 +18,13 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-// 🌟 ส่วนเนื้อหาหลักที่ทำงานกับ Data และ Client-side Hooks
+// ส่วนเนื้อหาหลักที่ทำงานกับ Data และ Client-side Hooks
 function AdminManageBlogsContent() {
   const supabase = createClient()
   const [blogs, setBlogs] = useState<Partial<Blog>[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
@@ -68,7 +68,7 @@ function AdminManageBlogsContent() {
         .from('blogs')
         .update({ is_published: !currentStatus })
         .eq('id', id)
-      
+
       if (error) throw error
       setBlogs(prev => prev.map(b => b.id === id ? { ...b, is_published: !currentStatus } : b))
     } catch (err) {
@@ -78,13 +78,13 @@ function AdminManageBlogsContent() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('คุณแน่ใจนะว่าจะลบบทความนี้?')) return
-    
+
     try {
       const { error } = await supabase.from('blogs').delete().eq('id', id)
       if (error) throw error
       fetchBlogs()
     } catch (err) {
-      alert('ลบไม่สำเร็จครับ')
+      alert('ลบไม่สำเร็จ')
     }
   }
 
@@ -101,8 +101,8 @@ function AdminManageBlogsContent() {
             <p className="text-gray-500 font-medium text-sm">จัดการและแก้ไขบทความทั้งหมดในระบบ</p>
           </div>
         </div>
-        <Link 
-          href="/write" 
+        <Link
+          href="/write"
           className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 shadow-sm shadow-yellow-100"
         >
           <Plus className="w-5 h-5 stroke-[3]" /> สร้างบทความใหม่
@@ -112,8 +112,8 @@ function AdminManageBlogsContent() {
       {/* Search Bar */}
       <div className="relative mb-8 group">
         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-yellow-500 transition-colors" />
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder="ค้นหาชื่อบทความที่ต้องการ..."
           className="w-full pl-14 pr-6 py-5 bg-white border border-gray-100 rounded-[1.5rem] focus:outline-none focus:ring-4 focus:ring-yellow-400/10 focus:border-yellow-400 shadow-sm transition-all text-gray-700 font-medium"
           value={searchTerm}
@@ -164,13 +164,12 @@ function AdminManageBlogsContent() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <button 
+                      <button
                         onClick={() => togglePublish(blog.id!, blog.is_published!)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all shadow-sm ${
-                          blog.is_published 
-                          ? 'bg-green-50 text-green-600 ring-1 ring-green-100' 
-                          : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all shadow-sm ${blog.is_published
+                            ? 'bg-green-50 text-green-600 ring-1 ring-green-100'
+                            : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200'
+                          }`}
                       >
                         {blog.is_published ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                         {blog.is_published ? 'Public' : 'Draft'}
@@ -183,19 +182,19 @@ function AdminManageBlogsContent() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end items-center gap-2">
-                        <Link 
+                        <Link
                           href={`/blog/${blog.slug}`}
                           className="p-2.5 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-xl transition-all"
                         >
                           <Eye className="w-5 h-5" />
                         </Link>
-                        <Link 
+                        <Link
                           href={`/admin/blogs/edit/${blog.id}`}
                           className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                         >
                           <FileEdit className="w-5 h-5" />
                         </Link>
-                        <button 
+                        <button
                           onClick={() => handleDelete(blog.id!)}
                           className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         >
@@ -208,7 +207,7 @@ function AdminManageBlogsContent() {
               ) : (
                 <tr>
                   <td colSpan={4} className="py-24 text-center">
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">ไม่พบบทความที่คุณค้นหาครับ</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">ไม่พบบทความที่คุณค้นหา</p>
                   </td>
                 </tr>
               )}
@@ -227,14 +226,14 @@ function AdminManageBlogsContent() {
             </span>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
               className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white transition-all shadow-sm active:scale-90"
             >
               <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
             </button>
-            <button 
+            <button
               disabled={currentPage * itemsPerPage >= totalCount}
               onClick={() => setCurrentPage(prev => prev + 1)}
               className="p-3 rounded-xl border border-gray-100 bg-white text-gray-600 hover:bg-yellow-400 hover:text-black disabled:opacity-20 disabled:hover:bg-white transition-all shadow-sm active:scale-90"
@@ -248,7 +247,7 @@ function AdminManageBlogsContent() {
   )
 }
 
-// 🌟 Export หลักที่ห่อด้วย Suspense เพื่อให้ build ผ่านฉลุย
+// Export หลักที่ห่อด้วย Suspense 
 export default function AdminManageBlogs() {
   return (
     <Suspense fallback={

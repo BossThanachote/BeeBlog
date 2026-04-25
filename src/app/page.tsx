@@ -4,11 +4,10 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { BlogCard } from '@/app/components/organisms/BlogCard';
 import { RightSidebar } from '@/app/components/organisms/RightSidebar';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client'; 
+import { createClient } from '@/utils/supabase/client';
 import { Loader2, SearchX, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 
-// 🌟 สร้าง Component ย่อยเพื่อแยกส่วนที่ใช้ useSearchParams
 function HomeContent() {
   const [activeTab, setActiveTab] = useState<'feed' | 'following'>('feed');
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -19,8 +18,8 @@ function HomeContent() {
 
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
-  
-  const supabase = createClient(); 
+
+  const supabase = createClient();
   const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
@@ -32,7 +31,7 @@ function HomeContent() {
       setIsLoading(true);
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
-      
+
       let query = supabase
         .from('blogs')
         .select(`
@@ -41,7 +40,7 @@ function HomeContent() {
           blog_likes(user_id),
           comments(user_id, status),
           saved_blogs(user_id)
-        `, { count: 'exact' }) 
+        `, { count: 'exact' })
         .eq('is_published', true);
 
       if (activeTab === 'following') {
@@ -56,7 +55,7 @@ function HomeContent() {
           .from('follows')
           .select('following_id')
           .eq('follower_id', user.id);
-        
+
         const followingIds = followData?.map((f: any) => f.following_id) || [];
 
         if (followingIds.length > 0) {
@@ -78,7 +77,7 @@ function HomeContent() {
         .range(from, to);
 
       if (error) throw error;
-      
+
       if (data) {
         const processedBlogs = data.map((blog: any) => ({
           ...blog,
@@ -89,7 +88,7 @@ function HomeContent() {
         }));
         setBlogs(processedBlogs);
       }
-      
+
       if (count !== null) {
         setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
       }
@@ -109,23 +108,21 @@ function HomeContent() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 w-full max-w-6xl mx-auto min-h-[calc(100vh-4rem)]">
       <div className="lg:col-span-8 px-4 md:px-8 pt-8 lg:pr-14 lg:border-r lg:border-gray-100">
-        
+
         {/* Tab Switcher */}
         <div className="sticky top-16 bg-white/80 backdrop-blur-md z-20 flex border-b border-gray-200 mb-6 pt-4">
-          <button 
+          <button
             onClick={() => setActiveTab('feed')}
-            className={`pb-4 px-6 font-bold transition-all relative cursor-pointer ${
-              activeTab === 'feed' ? 'text-black' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`pb-4 px-6 font-bold transition-all relative cursor-pointer ${activeTab === 'feed' ? 'text-black' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             Your Feed
             {activeTab === 'feed' && <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t-full" />}
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('following')}
-            className={`pb-4 px-6 font-bold transition-all relative cursor-pointer ${
-              activeTab === 'following' ? 'text-black' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`pb-4 px-6 font-bold transition-all relative cursor-pointer ${activeTab === 'following' ? 'text-black' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             Following
             {activeTab === 'following' && <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t-full" />}
@@ -149,7 +146,7 @@ function HomeContent() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-4 pt-10">
-                  <button 
+                  <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
                     className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -157,7 +154,7 @@ function HomeContent() {
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <span className="text-sm font-bold">หน้า {page} จาก {totalPages}</span>
-                  <button 
+                  <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
                     className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -176,9 +173,9 @@ function HomeContent() {
                 {activeTab === 'following' ? 'ยังไม่มีบทความจากคนที่คุณติดตาม' : 'ไม่พบบทความ'}
               </h3>
               <p className="text-gray-500 max-w-xs mx-auto leading-relaxed">
-                {activeTab === 'following' 
-                  ? 'ลองกดติดตามนักเขียนที่คุณชื่นชอบเพื่อรับข่าวสารใหม่ๆ ที่นี่ครับ!' 
-                  : 'ไม่พบข้อมูลที่คุณกำลังมองหา ลองเปลี่ยนคำค้นหาดูนะครับ'}
+                {activeTab === 'following'
+                  ? 'ลองกดติดตามนักเขียนที่คุณชื่นชอบเพื่อรับข่าวสารใหม่ๆ ที่นี่!'
+                  : 'ไม่พบข้อมูลที่คุณกำลังมองหา ลองเปลี่ยนคำค้นหาดูนะ'}
               </p>
             </div>
           )}
@@ -194,7 +191,6 @@ function HomeContent() {
   );
 }
 
-// 🌟 ฟังก์ชันหลัก Home ที่ห่อด้วย Suspense
 export default function Home() {
   return (
     <Suspense fallback={

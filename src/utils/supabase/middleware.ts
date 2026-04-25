@@ -35,7 +35,6 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname
   
-  // หน้าที่ต้องล็อคอินเท่านั้นถึงเข้าได้
   const isProtectedRoute = path.startsWith('/admin') || path.startsWith('/create') || path.startsWith('/profile')
   const isAuthPage = path.startsWith('/login')
 

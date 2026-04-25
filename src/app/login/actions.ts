@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 
-// 🟢 ฟังก์ชันสำหรับเข้าสู่ระบบ (Login)
+// ฟังก์ชันสำหรับเข้าสู่ระบบ (Login)
 export async function login(formData: FormData) {
   const supabase = await createClient()
   const email = formData.get('email') as string
@@ -22,7 +22,7 @@ export async function login(formData: FormData) {
   return { success: true } 
 }
 
-// 🔵 ฟังก์ชันสำหรับสมัครสมาชิก (Signup)
+// ฟังก์ชันสำหรับสมัครสมาชิก (Signup)
 export async function signup(formData: FormData) {
   const supabase = await createClient()
   const email = formData.get('email') as string
@@ -45,14 +45,10 @@ export async function signup(formData: FormData) {
   return { success: true }
 }
 
-// 🔴 ฟังก์ชันสำหรับออกจากระบบ (Logout) ที่หายไป! กลับมาแล้วครับ
+// ฟังก์ชันสำหรับออกจากระบบ (Logout) 
 export async function logout() {
   const supabase = await createClient()
-  
-  // สั่งให้ Supabase เคลียร์ Session ฝั่ง Server
   await supabase.auth.signOut()
-
-  // รีเซ็ต Cache หน้าเว็บ แล้วส่ง success กลับไปให้ Navbar จัดการต่อ
   revalidatePath('/', 'layout')
   return { success: true }
 }

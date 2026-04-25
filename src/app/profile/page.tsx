@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Loader2, Edit3, MoreHorizontal, Calendar, Eye, Heart, Users } from 'lucide-react'
 import { EditProfileModal } from '@/app/components/organisms/EditProfileModal'
-import { FollowModal } from '@/app/components/molecules/FollowModal' // 🌟 อย่าลืมสร้างไฟล์นี้นะครับ
+import { FollowModal } from '@/app/components/molecules/FollowModal' 
 import { useAuth } from '@/app/providers/AuthProvider'
 import Link from 'next/link'
 
@@ -20,14 +20,14 @@ export default function ProfilePage() {
   const [isEditingAbout, setIsEditingAbout] = useState(false)
   const [aboutMeContent, setAboutMeContent] = useState('')
 
-  // 🌟 Follow States
+  // Follow States
   const [followStats, setFollowStats] = useState({ followers: 0, following: 0 })
   const [followModal, setFollowModal] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
     isOpen: false,
     type: 'followers'
   })
 
-  // 🌟 1. ฟังก์ชันดึงยอด Follow
+  // ฟังก์ชันดึงยอด Follow
   const fetchFollowStats = useCallback(async (userId: string) => {
     const [{ count: followers }, { count: following }] = await Promise.all([
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId),
@@ -36,7 +36,7 @@ export default function ProfilePage() {
     setFollowStats({ followers: followers || 0, following: following || 0 })
   }, [supabase])
 
-  // 🌟 2. ฟังก์ชันดึงบทความ (พร้อมรูป Cover)
+  // ฟังก์ชันดึงบทความ (พร้อมรูป Cover)
   const fetchUserBlogs = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* 🌟 Modal สำหรับดูรายชื่อคนติดตาม */}
+      {/* Modal สำหรับดูรายชื่อคนติดตาม */}
       <FollowModal 
         isOpen={followModal.isOpen} 
         onClose={() => setFollowModal({ ...followModal, isOpen: false })}
@@ -110,7 +110,7 @@ export default function ProfilePage() {
               <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors"><MoreHorizontal className="w-6 h-6" /></button>
             </div>
             
-            {/* 🌟 คลิกที่ตัวเลขเพื่อเปิด Modal */}
+            {/* คลิกที่ตัวเลขเพื่อเปิด Modal */}
             <div className="flex items-center gap-6 mt-2">
               <button 
                 onClick={() => setFollowModal({ isOpen: true, type: 'followers' })}
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                   ))
                 ) : (
                   <div className="py-20 text-center bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
-                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm mb-4">ยังไม่มีบทความที่เขียนครับ</p>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm mb-4">ยังไม่มีบทความที่เขียน</p>
                     <Link href="/write" className="text-yellow-600 font-black text-xs underline underline-offset-4 uppercase">สร้างบทความแรก</Link>
                   </div>
                 )}

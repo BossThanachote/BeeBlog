@@ -14,7 +14,7 @@ export const CoverUploader = ({ coverUrl, setCoverUrl }: CoverUploaderProps) => 
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
-    
+
     const file = e.target.files[0]
     setIsUploading(true)
 
@@ -45,7 +45,7 @@ export const CoverUploader = ({ coverUrl, setCoverUrl }: CoverUploaderProps) => 
   return (
     <div className="w-full mb-8">
       {!coverUrl ? (
-        // 🌟 หน้าจอตอนยังไม่มีรูป (ตาม Design ของคุณ Boss)
+        // หน้าจอตอนยังไม่มีรูป 
         <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-100 border-dashed rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             {isUploading ? (
@@ -63,10 +63,10 @@ export const CoverUploader = ({ coverUrl, setCoverUrl }: CoverUploaderProps) => 
           <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
         </label>
       ) : (
-        // 🌟 หน้าจอตอนมีรูปแล้ว (แสดงรูปเต็มๆ พร้อมปุ่มลบทิ้ง)
+        // หน้าจอตอนมีรูปแล้ว 
         <div className="relative w-full h-auto min-h-[250px] max-h-[400px] rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
           <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-          
+
           {/* ปุ่มลบรูปปก */}
           <button
             onClick={() => setCoverUrl('')}

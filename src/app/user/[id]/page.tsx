@@ -30,7 +30,7 @@ export default function PublicProfilePage() {
     try {
       setIsLoading(true)
       
-      // 1. ดึงข้อมูล User
+      // ดึงข้อมูล User
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -40,7 +40,7 @@ export default function PublicProfilePage() {
       if (userError || !userData) return router.push('/')
       setTargetUser(userData)
 
-      // 2. นับ Followers
+      // นับ Followers
       const { count } = await supabase
         .from('follows')
         .select('*', { count: 'exact', head: true })
@@ -48,7 +48,7 @@ export default function PublicProfilePage() {
       
       setFollowerCount(count || 0)
 
-      // 3. ดึง Blogs พร้อมรูปภาพ Cover
+      // ดึง Blogs พร้อมรูปภาพ Cover
       const { data: blogData } = await supabase
         .from('blogs')
         .select('*, users(username, avatar_url)')
@@ -58,7 +58,7 @@ export default function PublicProfilePage() {
       
       setBlogs(blogData || [])
 
-      // 4. เช็คการติดตาม
+      // เช็คการติดตาม
       if (currentUser) {
         const { data: followCheck } = await supabase
           .from('follows')
@@ -78,7 +78,7 @@ export default function PublicProfilePage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const handleFollow = async () => {
-    if (!currentUser) return alert('กรุณาเข้าสู่ระบบก่อนนะครับ')
+    if (!currentUser) return alert('กรุณาเข้าสู่ระบบก่อนนะ')
     try {
       if (isFollowing) {
         await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', params.id)
@@ -147,7 +147,7 @@ export default function PublicProfilePage() {
                     </div>
                   </div>
                   
-                  {/* 🌟 แสดงรูปภาพ Blog ถ้ามี */}
+                  {/* แสดงรูปภาพ Blog ถ้ามี */}
                   {blog.cover_image && (
                     <Link href={`/blog/${blog.slug}`} className="w-full md:w-48 h-32 shrink-0 rounded-2xl overflow-hidden border border-gray-100 order-1 md:order-2 shadow-sm group-hover:shadow-md transition-shadow">
                       <img src={blog.cover_image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={blog.title} />
@@ -157,7 +157,7 @@ export default function PublicProfilePage() {
               )) : (
                 <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                   <BookOpen className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-bold italic">User ท่านนี้ยังไม่มีบทความที่เผยแพร่ครับ</p>
+                  <p className="text-gray-400 font-bold italic">User ท่านนี้ยังไม่มีบทความที่เผยแพร่</p>
                 </div>
               )}
             </div>
@@ -166,7 +166,7 @@ export default function PublicProfilePage() {
               <h4 className="text-xl font-black text-gray-900 mb-6">About {targetUser.username}</h4>
               <div className="prose prose-gray max-w-none">
                 <p className="text-gray-600 leading-loose whitespace-pre-wrap font-medium">
-                  {targetUser.bio || "คนนี้ยังไม่ได้เขียนประวัติส่วนตัวครับ"}
+                  {targetUser.bio || "คนนี้ยังไม่ได้เขียนประวัติส่วนตัว"}
                 </p>
               </div>
               <div className="mt-12 pt-8 border-t border-gray-100 flex gap-10">
@@ -184,7 +184,7 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* ฝั่งขวา: Sidebar User Info */}
+      {/* ฝั่งขวา Sidebar User Info */}
       <div className="lg:col-span-4 lg:pl-12 lg:border-l border-gray-50">
         <div className="sticky top-28">
           <div className="w-24 h-24 rounded-[2rem] overflow-hidden mb-6 border-4 border-white shadow-2xl shadow-gray-200">

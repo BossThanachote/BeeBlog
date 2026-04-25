@@ -19,7 +19,7 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
   const [replyTo, setReplyTo] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // 🌟 1. ดึงคอมเมนต์และ Join ตาราง users เพื่อเอา username และ avatar_url ที่ถูกต้อง
+  // ดึงคอมเมนต์และ Join ตาราง users เพื่อเอา username และ avatar_url ที่ถูกต้อง
   const fetchComments = useCallback(async () => {
     const { data, error } = await supabase
       .from('comments')
@@ -32,7 +32,7 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
       `)
       .eq('blog_id', blogId)
       .order('created_at', { ascending: true })
-    
+
     if (!error) setComments(data || [])
   }, [blogId, supabase])
 
@@ -40,16 +40,17 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
     if (isOpen) fetchComments()
   }, [isOpen, fetchComments])
 
+  // validate เป็นภาษาไทยและตัวเลขเท่านั้น
   const validateText = (text: string) => /^[ก-๙0-9\s]+$/.test(text)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim()) return
     if (!validateText(message)) return alert("ภาษาไทยและตัวเลขเท่านั้นนะคุณ Boss!")
-    
+
     setIsLoading(true)
 
-    // 🌟 ดึงข้อมูล Profile ล่าสุดของผู้ใช้
+    // ดึงข้อมูล Profile ล่าสุดของผู้ใช้
     let displayName = guestName
     let role = 'user'
 
@@ -59,15 +60,15 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
         .select('username, role')
         .eq('id', currentUser.id)
         .single()
-      
+
       // ใช้ username จากตาราง users ถ้าไม่มีค่อยใช้ metadata หรือ email
       displayName = profile?.username || currentUser.user_metadata?.username || currentUser.email
       role = profile?.role || 'user'
     }
 
     if (!displayName && !guestName.trim()) {
-       setIsLoading(false)
-       return alert("กรุณาใส่ชื่อก่อนครับ")
+      setIsLoading(false)
+      return alert("กรุณาใส่ชื่อก่อน")
     }
 
     const isApproved = role === 'admin'
@@ -75,10 +76,10 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
     const { error } = await supabase.from('comments').insert({
       blog_id: blogId,
       user_id: currentUser?.id || null,
-      sender_name: displayName, // 🌟 บันทึกชื่อที่ดึงมาลงไป
+      sender_name: displayName,
       message: message,
       status: isApproved ? 'approved' : 'pending',
-      parent_id: replyTo?.id || null 
+      parent_id: replyTo?.id || null
     })
 
     if (!error) {
@@ -90,7 +91,7 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("ลบคอมเมนต์นี้ใช่ไหมครับ?")) return
+    if (!confirm("ลบคอมเมนต์นี้ใช่ไหม?")) return
     const { error } = await supabase.from('comments').delete().eq('id', id)
     if (!error) fetchComments()
   }
@@ -101,7 +102,7 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
   return (
     <>
       <div className={`fixed inset-0 bg-black/5 backdrop-blur-[2px] z-[100] transition-all duration-500 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
-      
+
       <div className={`fixed top-0 right-0 h-full w-full max-w-[420px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.05)] z-[101] transition-transform duration-500 ease-out transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="px-8 py-7 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
@@ -115,22 +116,22 @@ export const CommentSidebar = ({ isOpen, onClose, blogId, currentUser }: Comment
           <div className="flex-1 overflow-y-auto px-8 py-2 space-y-10 scrollbar-hide">
             {rootComments.map((mainComment) => (
               <div key={mainComment.id} className="space-y-6">
-                <CommentItem 
-                  item={mainComment} 
-                  currentUser={currentUser} 
+                <CommentItem
+                  item={mainComment}
+                  currentUser={currentUser}
                   guestName={guestName}
-                  onReply={() => setReplyTo(mainComment)} 
+                  onReply={() => setReplyTo(mainComment)}
                   onDelete={handleDelete}
                   isReply={false}
                 />
                 <div className="ml-6 space-y-6 border-l-2 border-gray-50 pl-6">
                   {getReplies(mainComment.id).map((reply) => (
-                    <CommentItem 
-                      key={reply.id} 
-                      item={reply} 
-                      currentUser={currentUser} 
+                    <CommentItem
+                      key={reply.id}
+                      item={reply}
+                      currentUser={currentUser}
                       guestName={guestName}
-                      onReply={() => setReplyTo(mainComment)} 
+                      onReply={() => setReplyTo(mainComment)}
                       onDelete={handleDelete}
                       isReply={true}
                     />
@@ -172,7 +173,7 @@ const CommentItem = ({ item, currentUser, guestName, onReply, onDelete, isReply 
 
   if (isPending && !isAdmin && !isOwner) return null;
 
-  // 🌟 ดึงข้อมูลจากตาราง users ที่ Join มา
+  // ดึงข้อมูลจากตาราง users ที่ Join มา
   const displayUsername = item.users?.username || item.sender_name;
   const avatarUrl = item.users?.avatar_url;
 

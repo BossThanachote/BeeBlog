@@ -4,7 +4,7 @@ import { LucideIcon } from 'lucide-react';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   icon: LucideIcon;
-  error?: string; // เพิ่ม Prop สำหรับรับข้อความ Error
+  error?: string; 
 }
 
 export const Input = ({ label, icon: Icon, error, ...props }: InputProps) => {

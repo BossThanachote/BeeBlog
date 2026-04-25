@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation'; // <-- เพิ่มบรรทัดนี้
+import { usePathname } from 'next/navigation'; 
 import { Navbar } from '@/app/components/organisms/Navbar';
 import { Sidebar } from '@/app/components/organisms/Sidebar';
 import { AuthProvider } from '@/app/providers/AuthProvider';
@@ -9,7 +9,7 @@ import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const pathname = usePathname(); // <-- เก็บค่า URL ปัจจุบัน
+  const pathname = usePathname(); 
 
   // เช็คว่าตอนนี้อยู่หน้าเขียนบล็อกหรือเปล่า
   const isWritePage = pathname === '/write';

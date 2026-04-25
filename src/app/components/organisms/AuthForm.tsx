@@ -22,8 +22,6 @@ export const AuthForm = () => {
       setErrorMsg(result.error);
       setIsLoading(false);
     } else if (result?.success) {
-      // 🌟 บังคับ Hard Refresh เพื่อล้าง Cache และให้ Navbar ดึงข้อมูลใหม่
-      // วิธีนี้จะทำให้สถานะ Login อัปเดตทันที 100% ครับ
       window.location.href = '/'; 
     }
   };
@@ -35,8 +33,7 @@ export const AuthForm = () => {
 
       <div className="p-8 flex-1 flex flex-col">
         
-        {/* ลบกล่องแจ้งเตือน Error สีแดงตรงนี้ออกไปได้เลยครับ! */}
-a
+        {/* ลบกล่องแจ้งเตือน Error สีแดงตรงนี้ออก*/}
         <form action={handleSubmit} className="space-y-5 flex-1 flex flex-col justify-center">
           
           {!isLogin && (
@@ -59,7 +56,6 @@ a
             placeholder="hello@beeblog.com"
             icon={Mail}
             required
-            // ส่ง Error มาแสดงตรงนี้เฉพาะตอนอยู่หน้า ล็อกอิน
             error={isLogin && errorMsg ? errorMsg : undefined}
           />
 

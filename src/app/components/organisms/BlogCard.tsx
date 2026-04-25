@@ -1,11 +1,9 @@
 'use client'
-
-import React from 'react'
 import Link from 'next/link'
 import { Eye, MessageCircle, Bookmark, MoreHorizontal, Heart } from 'lucide-react'
 import { Blog } from '@/app/types'
 
-// 🌟 ปรับปรุง Interface ให้รองรับสถานะจากหน้า Feed
+// Interface ให้รองรับสถานะจากหน้า Feed
 interface BlogCardProps {
   blog: Blog & {
     comment_count?: number
@@ -71,8 +69,8 @@ export const BlogCard = ({ blog }: BlogCardProps) => {
           {/* Engagement Bar */}
           <div className="flex items-center justify-between mt-auto text-gray-400">
             <div className="flex items-center gap-6">
-              
-              {/* ❤️ ไลก์: เปลี่ยนเป็นสีแดงถ้า User เคยไลก์ */}
+
+              {/* like : เปลี่ยนเป็นสีแดงถ้า User เคย like */}
               <div className={`flex items-center gap-1.5 transition-colors ${blog.isLiked ? 'text-red-500' : 'hover:text-red-500'}`}>
                 <Heart className={`w-4 h-4 ${blog.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
                 <span className={`text-xs font-black ${blog.isLiked ? 'text-red-500' : ''}`}>
@@ -80,7 +78,7 @@ export const BlogCard = ({ blog }: BlogCardProps) => {
                 </span>
               </div>
 
-              {/* 💬 คอมเมนต์: แสดงยอดจริง และเป็นสีฟ้าถ้า User เคยคอมเมนต์ */}
+              {/* comment : แสดงยอดจริง และเป็นสีฟ้าถ้า User เคย comment */}
               <div className={`flex items-center gap-1.5 transition-colors ${blog.isCommented ? 'text-blue-500' : 'hover:text-blue-500'}`}>
                 <MessageCircle className={`w-4 h-4 ${blog.isCommented ? 'fill-blue-500 text-blue-500' : ''}`} />
                 <span className={`text-xs font-black ${blog.isCommented ? 'text-blue-500' : ''}`}>
@@ -88,7 +86,7 @@ export const BlogCard = ({ blog }: BlogCardProps) => {
                 </span>
               </div>
 
-              {/* 👁️ ยอดวิว */}
+              {/* ยอดวิว */}
               <div className="flex items-center gap-1.5 hover:text-gray-900 transition-colors">
                 <Eye className="w-4 h-4" />
                 <span className="text-xs font-black">{blog.view_count || 0}</span>
@@ -96,20 +94,19 @@ export const BlogCard = ({ blog }: BlogCardProps) => {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* 🔖 เซฟ: เปลี่ยนเป็นสีเหลืองถ้า User เคยเซฟ */}
-              <Bookmark 
-                className={`w-5 h-5 transition-all ${
-                  blog.isSaved 
-                    ? 'fill-yellow-500 text-yellow-500' 
-                    : 'text-gray-300 hover:text-gray-900'
-                }`} 
+              {/* save: เปลี่ยนเป็นสีเหลืองถ้า User เคย save */}
+              <Bookmark
+                className={`w-5 h-5 transition-all ${blog.isSaved
+                  ? 'fill-yellow-500 text-yellow-500'
+                  : 'text-gray-300 hover:text-gray-900'
+                  }`}
               />
               <MoreHorizontal className="w-5 h-5 hover:text-gray-900 transition-colors" />
             </div>
           </div>
         </div>
 
-        {/* 🖼️ รูปภาพปกบทความ (ฝั่งขวา) */}
+        {/* รูปภาพปกบทความ (ฝั่งขวา) */}
         {blog.cover_image && (
           <div className="w-full md:w-[200px] h-[134px] bg-gray-50 overflow-hidden shrink-0 mt-2 md:mt-0 rounded-2xl border border-gray-100 shadow-sm">
             <img

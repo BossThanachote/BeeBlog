@@ -1,19 +1,19 @@
 /* File นี้เป็นเพียงแค่ไฟล์ Mockup สำหรับทดสอบ UI เท่านั้น */
-/* ใช้เพื่อเป็นตัวอย่างในการออกแบบ UI และ UX เป็นต้นแบบของการนำมาใช้เป็น Design token */ 
+/* ใช้เพื่อเป็นตัวอย่างในการออกแบบ UI และ UX เป็นต้นแบบของการนำมาใช้เป็น Design token */
 
 import React, { useState } from 'react';
-import { 
-  Menu, 
-  Search, 
-  PenSquare, 
-  Bell, 
-  Home, 
-  Library, 
-  User, 
-  BarChart2, 
-  Heart, 
-  MessageCircle, 
-  Repeat2, 
+import {
+  Menu,
+  Search,
+  PenSquare,
+  Bell,
+  Home,
+  Library,
+  User,
+  BarChart2,
+  Heart,
+  MessageCircle,
+  Repeat2,
   X,
   ChevronRight,
   TrendingUp,
@@ -60,7 +60,7 @@ const App = () => {
       {/* Navbar */}
       <nav className="fixed top-0 w-full h-16 bg-white border-b border-gray-100 px-4 flex items-center justify-between z-50">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
             className="p-2 hover:bg-yellow-50 rounded-full transition-colors"
           >
@@ -75,8 +75,8 @@ const App = () => {
         <div className="flex-1 max-w-xl mx-8 hidden md:block">
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-yellow-600" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="ค้นหาหัวข้อ Blog..."
               className="w-full bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent rounded-2xl py-2 pl-10 pr-4 transition-all outline-none"
             />
@@ -100,7 +100,7 @@ const App = () => {
 
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
@@ -115,7 +115,7 @@ const App = () => {
               <X className="w-6 h-6" />
             </button>
           </div>
-          
+
           <nav className="space-y-2">
             <SidebarItem icon={<Home />} label="Home" active />
             <SidebarItem icon={<Library />} label="Library" />
@@ -133,19 +133,19 @@ const App = () => {
 
       {/* Main Content */}
       <main className="pt-20 px-4 md:px-8 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Feed Section */}
         <div className="lg:col-span-8">
           {/* Tabs */}
           <div className="flex border-b border-gray-200 mb-6">
-            <button 
+            <button
               onClick={() => setActiveTab('feed')}
               className={`pb-4 px-6 font-bold transition-all relative ${activeTab === 'feed' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Your Feed
               {activeTab === 'feed' && <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t-full" />}
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('followed')}
               className={`pb-4 px-6 font-bold transition-all relative ${activeTab === 'followed' ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
             >
@@ -214,9 +214,9 @@ const BlogCard = ({ blog }) => (
   <article className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
     <div className="flex flex-col md:flex-row h-full">
       <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
-        <img 
-          src={blog.image} 
-          alt={blog.title} 
+        <img
+          src={blog.image}
+          alt={blog.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
       </div>
@@ -234,7 +234,7 @@ const BlogCard = ({ blog }) => (
             เนื้อหาบางส่วนของบล็อกจะแสดงที่นี่ เพื่อดึงดูดให้ผู้อ่านสนใจคลิกเข้าไปอ่านรายละเอียดเพิ่มเติม...
           </p>
         </div>
-        
+
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
           <div className="flex items-center gap-6">
             <button className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors group/btn">

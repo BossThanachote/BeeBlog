@@ -1,4 +1,3 @@
-// src/app/components/molecules/FollowModal.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -53,7 +52,7 @@ export const FollowModal = ({ isOpen, onClose, userId, type }: FollowModalProps)
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
           <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">
@@ -69,9 +68,9 @@ export const FollowModal = ({ isOpen, onClose, userId, type }: FollowModalProps)
             <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-yellow-400" /></div>
           ) : list.length > 0 ? (
             list.map((user) => (
-              <Link 
-                key={user.id} 
-                href={`/user/${user.id}`} 
+              <Link
+                key={user.id}
+                href={`/user/${user.id}`}
                 onClick={onClose}
                 className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-all group"
               >
@@ -85,7 +84,7 @@ export const FollowModal = ({ isOpen, onClose, userId, type }: FollowModalProps)
               </Link>
             ))
           ) : (
-            <div className="py-20 text-center text-gray-300 font-bold italic">ยังไม่มีรายชื่อครับ</div>
+            <div className="py-20 text-center text-gray-300 font-bold italic">ยังไม่มีรายชื่อ</div>
           )}
         </div>
       </div>

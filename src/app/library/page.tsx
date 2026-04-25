@@ -3,11 +3,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useAuth } from '@/app/providers/AuthProvider'
-import { 
-  Loader2, 
-  Heart, 
-  MessageCircle, 
-  Bookmark, 
+import {
+  Loader2,
+  Heart,
+  MessageCircle,
+  Bookmark,
   ChevronRight,
   Clock,
   Layout
@@ -30,7 +30,7 @@ type Activity = {
 export default function LibraryPage() {
   const supabase = createClient()
   const { user, isLoading: isAuthLoading } = useAuth()
-  
+
   const [activeTab, setActiveTab] = useState<'saved' | 'responses'>('saved')
   const [activities, setActivities] = useState<Activity[]>([])
   const [savedBlogs, setSavedBlogs] = useState<Activity[]>([])
@@ -40,14 +40,14 @@ export default function LibraryPage() {
     if (!user) return
     setIsLoading(true)
     try {
-      // 🌟 1. ดึงข้อมูลที่ Save ไว้
+      // ดึงข้อมูลที่ Save ไว้
       const { data: savedData } = await supabase
         .from('saved_blogs')
         .select('id, created_at, blogs(title, slug, summary, cover_image)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      // 🌟 2. ดึงข้อมูล Responses (Likes & Comments)
+      // ดึงข้อมูล Responses (Likes & Comments)
       const { data: likes } = await supabase
         .from('blog_likes')
         .select('id, created_at, blogs(title, slug, summary, cover_image)')
@@ -97,10 +97,10 @@ export default function LibraryPage() {
     <div className="max-w-5xl mx-auto pt-24 pb-20 px-6 animate-in fade-in duration-700">
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-           <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white shadow-lg">
-              <Layout className="w-6 h-6" />
-           </div>
-           <h1 className="text-4xl font-black text-gray-900 tracking-tight">Your library</h1>
+          <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white shadow-lg">
+            <Layout className="w-6 h-6" />
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Your library</h1>
         </div>
         <Link href="/write" className="bg-black text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-sm">
           New story
@@ -129,8 +129,8 @@ export default function LibraryPage() {
       <div className="space-y-6">
         {currentList.length > 0 ? (
           currentList.map((item) => (
-            <Link 
-              key={`${item.type}-${item.id}`} 
+            <Link
+              key={`${item.type}-${item.id}`}
               href={`/blog/${item.blog?.slug}`}
               className="block group"
             >
@@ -163,7 +163,7 @@ export default function LibraryPage() {
                     <h2 className="text-2xl font-black text-gray-900 mb-3 group-hover:text-yellow-600 transition-colors leading-tight line-clamp-2">
                       {item.blog?.title}
                     </h2>
-                    
+
                     {/* ถ้าเป็น Comment ให้โชว์สิ่งที่เขียนไว้ */}
                     {item.type === 'comment' && (
                       <div className="mb-4 p-4 bg-gray-50 rounded-2xl border-l-4 border-blue-200">
@@ -172,7 +172,7 @@ export default function LibraryPage() {
                         </p>
                       </div>
                     )}
-                    
+
                     <p className="text-sm text-gray-400 font-medium line-clamp-1">
                       {item.blog?.summary}
                     </p>
@@ -195,7 +195,7 @@ export default function LibraryPage() {
         ) : (
           <div className="py-32 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200 animate-pulse">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-               {activeTab === 'saved' ? <Bookmark className="w-6 h-6 text-gray-300" /> : <MessageCircle className="w-6 h-6 text-gray-300" />}
+              {activeTab === 'saved' ? <Bookmark className="w-6 h-6 text-gray-300" /> : <MessageCircle className="w-6 h-6 text-gray-300" />}
             </div>
             <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-xs">
               No {activeTab} blogs found

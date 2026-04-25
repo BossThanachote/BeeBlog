@@ -20,7 +20,7 @@ export const WritePreview = ({ title, setTitle, subtitle, setSubtitle, coverImag
     <div className="min-h-screen bg-white">
       <div className="max-w-5xl mx-auto pt-16 px-6 sm:px-12">
         
-        {/* ปุ่มย้อนกลับ (เชื่อมกับปุ่ม Back ของ Browser ได้ด้วย) */}
+        {/* ปุ่มย้อนกลับ */}
         <button 
           onClick={onBack}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-10 transition-colors font-medium"

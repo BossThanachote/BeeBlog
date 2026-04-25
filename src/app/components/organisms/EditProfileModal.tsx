@@ -8,7 +8,7 @@ interface EditProfileModalProps {
   isOpen: boolean
   onClose: () => void
   currentUser: any
-  onSaved: () => void // โหลดข้อมูลใหม่เมื่อเซฟเสร็จ
+  onSaved: () => void
 }
 
 export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: EditProfileModalProps) => {
@@ -16,7 +16,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [dragActive, setDragActive] = useState(false)
-  
+
   // States สำหรับเก็บค่าในฟอร์ม
   const [username, setUsername] = useState('')
   const [pronouns, setPronouns] = useState('')
@@ -67,50 +67,50 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
     try {
       // 1. ตรวจสอบว่าเป็นไฟล์รูปภาพเท่านั้น
       if (!file.type.startsWith('image/')) {
-        alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้นครับ')
+        alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น')
         return
       }
-      
+
       // 2. ตรวจสอบขนาดไฟล์ (เช่น ไม่เกิน 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('ขนาดไฟล์ต้องไม่เกิน 5MB ครับ')
+        alert('ขนาดไฟล์ต้องไม่เกิน 5MB')
         return
       }
 
       setIsUploadingImage(true)
 
-      // 3. สร้างชื่อไฟล์ให้ไม่ซ้ำกัน (ใช้ userId + เวลาปัจจุบัน)
+      // สร้างชื่อไฟล์ให้ไม่ซ้ำกัน (ใช้ userId + เวลาปัจจุบัน)
       const fileExt = file.name.split('.').pop()
       const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`
       const filePath = `${fileName}`
 
-      // 4. อัปโหลดขึ้น Bucket 'avatars'
+      // อัปโหลดขึ้น Bucket 'avatars'
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { 
+        .upload(filePath, file, {
           upsert: true, // ทับไฟล์เดิมได้
           cacheControl: '3600'
         })
 
       if (uploadError) throw uploadError
 
-      // 5. ดึง Public URL กลับมาแสดงผล
+      // ดึง Public URL กลับมาแสดงผล
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      // 6. อัปเดต State ให้โชว์รูปใหม่ทันที
+      // อัปเดต State ให้โชว์รูปใหม่ทันที
       setAvatarUrl(publicUrl)
 
     } catch (error) {
       console.error("Upload error:", error)
-      alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพครับ")
+      alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ")
     } finally {
       setIsUploadingImage(false)
     }
   }
 
-  // ── ส่วนบันทึกข้อมูล Profile ──────────────────────────
+  // ส่วนบันทึกข้อมูล Profile 
   const handleSave = async () => {
     try {
       setIsLoading(true)
@@ -120,18 +120,18 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           username: username,
           pronouns: pronouns,
           bio: bio,
-          avatar_url: avatarUrl // บันทึก URL ใหม่ลง Database
+          avatar_url: avatarUrl
         })
         .eq('id', currentUser.id)
 
       if (error) throw error
-      
-      onSaved() // สั่งให้หน้าหลักดึงข้อมูลใหม่
-      onClose() // ปิดหน้าต่าง
+
+      onSaved()
+      onClose()
       window.dispatchEvent(new Event('profileUpdated'))
     } catch (error) {
       console.error("Error updating profile:", error)
-      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลครับ")
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล")
     } finally {
       setIsLoading(false)
     }
@@ -140,7 +140,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-200">
         <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition-colors">
           <X className="w-6 h-6" />
@@ -153,12 +153,12 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Photo</label>
             <div className="flex flex-col sm:flex-row items-center gap-6">
-              
+
               {/* Avatar Preview */}
               <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden border-4 border-white shadow-md shrink-0 relative group">
-                <img 
-                  src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`} 
-                  alt="Avatar Preview" 
+                <img
+                  src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`}
+                  alt="Avatar Preview"
                   className={`w-full h-full object-cover transition-opacity ${isUploadingImage ? 'opacity-50' : 'opacity-100'}`}
                 />
                 {isUploadingImage && (
@@ -169,20 +169,19 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
               </div>
 
               {/* Drag & Drop Zone */}
-              <div 
-                className={`flex-1 w-full relative border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-200 ${
-                  dragActive 
-                    ? 'border-yellow-400 bg-yellow-50' 
+              <div
+                className={`flex-1 w-full relative border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-200 ${dragActive
+                    ? 'border-yellow-400 bg-yellow-50'
                     : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300'
-                }`}
+                  }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <input 
-                  type="file" 
-                  accept="image/png, image/jpeg, image/webp" 
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
                   onChange={handleChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   disabled={isUploadingImage}
@@ -208,8 +207,8 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           {/* Name Section */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Name*</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 outline-none"
@@ -219,8 +218,8 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           {/* Pronouns Section */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Pronouns</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={pronouns}
               onChange={(e) => setPronouns(e.target.value)}
               placeholder="e.g. he/him, she/her"
@@ -231,7 +230,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           {/* Short Bio Section */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Short bio</label>
-            <textarea 
+            <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="เขียนอธิบายตัวเองสั้นๆ..."
@@ -248,8 +247,8 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
           <button onClick={onClose} className="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">
             Cancel
           </button>
-          <button 
-            onClick={handleSave} 
+          <button
+            onClick={handleSave}
             disabled={isLoading || !username || isUploadingImage}
             className="px-6 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center gap-2"
           >

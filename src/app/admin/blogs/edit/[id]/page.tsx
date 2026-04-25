@@ -23,12 +23,12 @@ export default function AdminEditBlog() {
     const router = useRouter()
     const supabase = createClient()
     
-    // --- States สำหรับ Blog Data ---
+    // States สำหรับ Blog Data
     const [blog, setBlog] = useState<Blog | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
 
-    // --- States สำหรับ Form Fields ---
+    // States สำหรับ Form Fields
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
     const [slug, setSlug] = useState('')
@@ -36,7 +36,7 @@ export default function AdminEditBlog() {
     const [coverImage, setCoverImage] = useState('')
     const [isPublished, setIsPublished] = useState(false)
 
-    // 🌟 1. ดึงข้อมูลบทความเดิมมาใส่ใน Form
+    // ดึงข้อมูลบทความเดิมมาใส่ใน Form
     const fetchBlogDetail = useCallback(async () => {
         try {
             setIsLoading(true)
@@ -69,7 +69,7 @@ export default function AdminEditBlog() {
         if (params.id) fetchBlogDetail()
     }, [fetchBlogDetail, params.id])
 
-    // ☁️ 2. ฟังก์ชันจัดการรูปหน้าปก (Upload to Supabase Storage)
+    // ฟังก์ชันจัดการรูปหน้าปก (Upload to Supabase Storage)
     const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
@@ -92,14 +92,14 @@ export default function AdminEditBlog() {
                 setCoverImage(urlData.publicUrl)
             } catch (error) {
                 console.error('Upload Error:', error)
-                alert('อัปโหลดรูปภาพไม่สำเร็จครับ')
+                alert('อัปโหลดรูปภาพไม่สำเร็จ')
             } finally {
                 setIsSaving(false)
             }
         }
     }
 
-    // 🌟 3. ฟังก์ชันบันทึกข้อมูล (Update Database)
+    // ฟังก์ชันบันทึกข้อมูล 
     const handleSave = async () => {
         if (!title.trim() || !slug.trim()) {
             alert('กรุณากรอกหัวข้อและ URL Slug ด้วย')
@@ -109,7 +109,7 @@ export default function AdminEditBlog() {
         try {
             setIsSaving(true)
 
-            // --- 🚀 แปลง HTML เสกแท็ก <img> ก่อน Save  ---
+            // แปลง HTML เสกแท็ก <img> ก่อน Save  
             let finalHTMLContent = content;
 
             if (typeof window !== 'undefined') {
@@ -158,13 +158,13 @@ export default function AdminEditBlog() {
 
             if (error) throw error
 
-            alert('บันทึกการเปลี่ยนแปลงเรียบร้อยแล้วครับ🐝✨')
+            alert('บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว🐝✨')
             router.push('/admin/blogs')
             router.refresh()
 
         } catch (err) {
             console.error('Save Error:', err)
-            alert('บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้งครับ')
+            alert('บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
         } finally {
             setIsSaving(false)
         }
@@ -181,7 +181,7 @@ export default function AdminEditBlog() {
 
     return (
         <div className="min-h-screen bg-[#fafafa] pt-24 pb-32 px-4 md:px-6">
-            {/* 🛠️ Sticky Top Bar */}
+            {/* Sticky Top Bar */}
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 mb-12 bg-white/80 backdrop-blur-xl p-5 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 sticky top-20 z-50 transition-all">
                 <div className="flex items-center gap-5">
                     <Link href="/admin/blogs" className="p-3.5 bg-gray-50 hover:bg-yellow-400 hover:text-black rounded-2xl text-gray-400 transition-all active:scale-90">
@@ -216,7 +216,7 @@ export default function AdminEditBlog() {
                 </div>
             </div>
 
-            {/* 📝 Editor & Sidebar Grid */}
+            {/* Editor & Sidebar Grid */}
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr,380px] gap-10">
 
                 {/* Left Side: Rich Text Editor */}

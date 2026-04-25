@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { Blog } from '@/app/types'
 import { AuthHeartModal } from '@/app/components/molecules/AuthHeartModal'
 import { CommentSidebar } from '@/app/components/organisms/CommentSidebar'
+import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
 import {
   Loader2,
@@ -20,10 +22,8 @@ import {
   UserPlus,
   UserCheck
 } from 'lucide-react'
-import Link from 'next/link'
-import { createClient } from '@/utils/supabase/client'
 
-// 🌟 Component แยกสำหรับเมนู 3 จุด (ป้องกัน State ตีกันบน-ล่าง)
+// Component แยกสำหรับเมนู 3 จุด (ป้องกัน State ตีกันบน-ล่าง)
 const OwnerActionMenu = ({ blog, currentUser, onTogglePublish, onDelete }: any) => {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -41,7 +41,7 @@ const OwnerActionMenu = ({ blog, currentUser, onTogglePublish, onDelete }: any) 
 
   return (
     <div className="relative" ref={menuRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={`p-1.5 rounded-full transition-all ${isOpen ? 'bg-gray-100 text-black' : 'hover:bg-gray-50 hover:text-black'}`}
       >
@@ -51,7 +51,7 @@ const OwnerActionMenu = ({ blog, currentUser, onTogglePublish, onDelete }: any) 
       {isOpen && (
         <div className="absolute right-0 bottom-full mb-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-bottom-2">
           {isAdmin && (
-            <Link 
+            <Link
               href={`/admin/blogs/edit/${blog?.id}`}
               className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
             >
@@ -59,7 +59,7 @@ const OwnerActionMenu = ({ blog, currentUser, onTogglePublish, onDelete }: any) 
             </Link>
           )}
 
-          <button 
+          <button
             onClick={() => { onTogglePublish(); setIsOpen(false); }}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
           >
@@ -71,8 +71,8 @@ const OwnerActionMenu = ({ blog, currentUser, onTogglePublish, onDelete }: any) 
           </button>
 
           <div className="h-px bg-gray-50 my-1 mx-2" />
-          
-          <button 
+
+          <button
             onClick={() => { onDelete(); setIsOpen(false); }}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
           >
@@ -99,19 +99,19 @@ export default function BlogDetailPage() {
   const [isSaved, setIsSaved] = useState(false)
   const [isFollowing, setIsFollowing] = useState(false)
   const [isAnimate, setIsAnimate] = useState(false)
-  
+
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isCommentOpen, setIsCommentOpen] = useState(false)
   const [commentCount, setCommentCount] = useState(0)
 
-  // 1. คำนวณเวลาอ่าน
+  // คำนวณเวลาอ่าน
   const calculateReadTime = (text: string) => {
     const words = text.replace(/<[^>]*>?/gm, '').split(/\s+/).length
     setReadTime(Math.ceil(words / 200) || 1)
   }
 
-  // 2. ดึงจำนวนคอมเมนต์
+  // ดึงจำนวนคอมเมนต์
   const fetchCommentCount = useCallback(async (blogId: string) => {
     const { count } = await supabase
       .from('comments')
@@ -121,7 +121,7 @@ export default function BlogDetailPage() {
     setCommentCount(count || 0)
   }, [supabase])
 
-  // 3. ดึงข้อมูลบทความ
+  // ดึงข้อมูลบทความ
   const fetchBlogDetail = useCallback(async () => {
     try {
       setIsLoading(true)
@@ -139,7 +139,7 @@ export default function BlogDetailPage() {
         setLikeCount(data.likes || 0)
         if (data.content) calculateReadTime(data.content)
         fetchCommentCount(data.id)
-        
+
         // เพิ่มยอดวิว (RPC)
         await supabase.rpc('increment_view_count', { blog_id: data.id })
         setBlog(prev => prev ? { ...prev, view_count: (prev.view_count || 0) + 1 } : null)
@@ -151,7 +151,7 @@ export default function BlogDetailPage() {
     }
   }, [params.slug, supabase, fetchCommentCount])
 
-  // 4. เช็คสถานะการ Interact (Like, Save, Follow)
+  // เช็คสถานะการ Interact (Like, Save, Follow)
   useEffect(() => {
     const checkInteractions = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -178,7 +178,7 @@ export default function BlogDetailPage() {
     if (params.slug) fetchBlogDetail()
   }, [fetchBlogDetail, params.slug])
 
-  // --- ACTIONS ---
+  // ACTIONS 
 
   const handleLike = async () => {
     if (!currentUser) return setIsAuthModalOpen(true)

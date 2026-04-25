@@ -32,12 +32,12 @@ const uploadImageToCloud = async (file: File): Promise<string> => {
   return data.publicUrl
 }
 
-// 🌟 Component จัดการ Layout รูปภาพ (Medium Clone + Supabase)
+// Component จัดการ Layout รูปภาพ 
 const ImageGroupComponent = (props: any) => {
   const { node, selected, updateAttributes, deleteNode, getPos, editor } = props
   const images = node.attrs.images || []
   const isSingle = images.length === 1
-  
+
   const [aspectRatios, setAspectRatios] = React.useState<number[]>([])
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null)
   const [imagesLoaded, setImagesLoaded] = React.useState<boolean[]>(new Array(images.length).fill(false))
@@ -50,7 +50,7 @@ const ImageGroupComponent = (props: any) => {
   React.useEffect(() => {
     if (images.length === 0) return
     const ratios: number[] = new Array(images.length).fill(1)
-    
+
     images.forEach((src: string, index: number) => {
       const img = new window.Image()
       img.src = src
@@ -70,8 +70,8 @@ const ImageGroupComponent = (props: any) => {
     })
   }, [images])
 
-  const totalRatio = aspectRatios.length === images.length 
-    ? aspectRatios.reduce((sum, ratio) => sum + ratio, 0) 
+  const totalRatio = aspectRatios.length === images.length
+    ? aspectRatios.reduce((sum, ratio) => sum + ratio, 0)
     : images.length
 
   const removeImage = (indexToRemove: number) => {
@@ -81,7 +81,7 @@ const ImageGroupComponent = (props: any) => {
     } else {
       updateAttributes({ images: newImages })
       setActiveIndex(null)
-      setAspectRatios([]) 
+      setAspectRatios([])
       setImagesLoaded(new Array(newImages.length).fill(false))
     }
   }
@@ -113,14 +113,14 @@ const ImageGroupComponent = (props: any) => {
         {images.map((src: string, index: number) => {
           const isReady = aspectRatios.length === images.length
           const ratio = isReady ? aspectRatios[index] : 1
-          
+
           const widthPercentage = isSingle ? 'auto' : isReady ? `${(ratio / totalRatio) * 100}%` : `${100 / images.length}%`
           const paddingBottom = isSingle && isReady ? '0' : `${(1 / ratio) * 100}%`
 
           return (
             <div
               key={index}
-              draggable={true} 
+              draggable={true}
               onDragStart={(e) => {
                 e.dataTransfer.setData('application/tiptap-image-move', JSON.stringify({ src, fromPos: getPos(), fromIndex: index }))
                 e.dataTransfer.effectAllowed = 'move'
@@ -144,13 +144,13 @@ const ImageGroupComponent = (props: any) => {
 
                 const internalMoveData = e.dataTransfer.getData('application/tiptap-image-move')
 
-                // 🔀 กรณี: ลากย้ายรูปภาพภายใน Editor
+                // กรณี ลากย้ายรูปภาพภายใน Editor
                 if (internalMoveData) {
                   try {
                     const { src: moveSrc, fromPos, fromIndex } = JSON.parse(internalMoveData)
 
                     if (fromPos === getPos()) {
-                      if (fromIndex === targetIndex || fromIndex === targetIndex - 1) return 
+                      if (fromIndex === targetIndex || fromIndex === targetIndex - 1) return
                       const newImages = [...images]
                       newImages.splice(fromIndex, 1)
                       if (fromIndex < targetIndex) targetIndex--
@@ -158,7 +158,7 @@ const ImageGroupComponent = (props: any) => {
                       updateAttributes({ images: newImages })
                     } else {
                       if (images.length >= 3) {
-                        alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้วครับ')
+                        alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้ว')
                         return
                       }
                       const newImages = [...images]
@@ -179,19 +179,19 @@ const ImageGroupComponent = (props: any) => {
                       editor.view.dispatch(tr)
                     }
                   } catch (err) { console.error('Move Error:', err) }
-                } 
-                // 🔀 กรณี: ลากไฟล์รูปจากเครื่องคอมพิวเตอร์มาใส่ "ทับ" รูปเดิม
+                }
+                // กรณี ลากไฟล์รูปจากเครื่องคอมพิวเตอร์มาใส่ "ทับ" รูปเดิม
                 else if (e.dataTransfer.files?.length) {
                   const file = e.dataTransfer.files[0]
                   if (file.type.startsWith('image/')) {
-                    
-                    // 🌟 เช็ค Limit ก่อนอัปโหลด
+
+                    // เช็ค Limit ก่อนอัปโหลด
                     let totalImages = 0
                     editor.state.doc.descendants((n: any) => {
                       if (n.type.name === 'imageGroup') totalImages += n.attrs.images.length
                     })
                     if (totalImages >= 6) {
-                      alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+                      alert('คุณแทรกรูปภาพครบ 6 รูปแล้ว ไม่สามารถเพิ่มได้อีก')
                       return
                     }
 
@@ -205,7 +205,7 @@ const ImageGroupComponent = (props: any) => {
                         alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
                       })
                     } else {
-                      alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้วครับ')
+                      alert('กล่องบรรทัดนี้เต็ม 3 รูปแล้ว')
                     }
                   }
                 }
@@ -214,9 +214,8 @@ const ImageGroupComponent = (props: any) => {
                 e.stopPropagation()
                 setActiveIndex(index)
               }}
-              className={`relative overflow-hidden rounded-lg border shadow-sm cursor-pointer transition-all duration-300 ${
-                isSingle ? (isReady ? 'max-w-[80%] mx-auto' : 'w-full max-w-[80%] mx-auto') : ''
-              } ${activeIndex === index ? 'ring-4 ring-red-500 z-10' : 'border-gray-100'}
+              className={`relative overflow-hidden rounded-lg border shadow-sm cursor-pointer transition-all duration-300 ${isSingle ? (isReady ? 'max-w-[80%] mx-auto' : 'w-full max-w-[80%] mx-auto') : ''
+                } ${activeIndex === index ? 'ring-4 ring-red-500 z-10' : 'border-gray-100'}
                 ${!imagesLoaded[index] ? 'bg-gray-200 animate-pulse' : 'bg-transparent'}
               `}
               style={{ width: widthPercentage }}
@@ -226,14 +225,14 @@ const ImageGroupComponent = (props: any) => {
               )}
 
               {!isSingle && <div style={{ paddingBottom: paddingBottom, width: '100%' }} />}
-              
-              <img 
-                src={src} 
-                alt={`blog-content-${index}`} 
+
+              <img
+                src={src}
+                alt={`blog-content-${index}`}
                 draggable={false}
                 className={`transition-opacity duration-500 ease-in-out ${isSingle ? 'relative w-full h-auto block' : 'absolute top-0 left-0 w-full h-full object-cover'} ${imagesLoaded[index] ? 'opacity-100' : 'opacity-0'}`}
               />
-              
+
               {activeIndex === index && (
                 <button
                   type="button"
@@ -255,15 +254,15 @@ const ImageGroupComponent = (props: any) => {
   )
 }
 
-// 🌟 สร้าง Extension สำหรับ ImageGroup
+// สร้าง Extension สำหรับ ImageGroup
 const ImageGroup = Node.create({
   name: 'imageGroup',
   group: 'block',
   atom: true,
   draggable: true,
-  addAttributes() { 
-    return { 
-      images: { 
+  addAttributes() {
+    return {
+      images: {
         default: [],
         parseHTML: element => {
           const data = element.getAttribute('data-images')
@@ -272,8 +271,8 @@ const ImageGroup = Node.create({
         renderHTML: attributes => {
           return { 'data-images': JSON.stringify(attributes.images) }
         }
-      } 
-    } 
+      }
+    }
   },
   parseHTML() { return [{ tag: 'div[data-type="image-group"]' }] },
   renderHTML({ HTMLAttributes }) { return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'image-group' })] },
@@ -306,19 +305,19 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
     onTransaction: () => { setRenderTrigger(prev => prev + 1) },
     editorProps: {
       attributes: { class: 'prose prose-lg max-w-none focus:outline-none min-h-[600px] text-gray-900 p-4' },
-      
-      // 🌟 ดักจับการกด Ctrl+V (Paste)
+
+      // ดักจับการกด Ctrl+V (Paste)
       handlePaste: (view, event) => {
         if (event.clipboardData?.files?.length) {
           const file = event.clipboardData.files[0]
           if (file.type.startsWith('image/')) {
             event.preventDefault()
-            
-            // 🛑 เช็ค Limit 6 รูป
+
+            // เช็ค Limit 6 รูป
             let total = 0
             view.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
             if (total >= 6) {
-              alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              alert('คุณแทรกรูปภาพครบ 6 รูปแล้ว ไม่สามารถเพิ่มได้อีก')
               return true
             }
 
@@ -335,11 +334,11 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
         return false
       },
 
-      // 🌟 ดักจับการลากไฟล์มาวางบน Editor (Drop)
+      // ดักจับการลากไฟล์มาวางบน Editor (Drop)
       handleDrop: (view, event, slice, moved) => {
         const internalMoveData = event.dataTransfer?.getData('application/tiptap-image-move')
-        
-        // 1. กรณี: เป็นการลากรูปย้ายตำแหน่งภายใน
+
+        // กรณี: เป็นการลากรูปย้ายตำแหน่งภายใน
         if (internalMoveData) {
           try {
             const { src, fromPos, fromIndex } = JSON.parse(internalMoveData)
@@ -355,8 +354,8 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
             })
 
             if (targetGroupPos !== -1 && targetGroupPos !== fromPos) {
-              if (targetGroupNode.attrs.images.length >= 3) return false 
-              
+              if (targetGroupNode.attrs.images.length >= 3) return false
+
               const sourceNode = view.state.doc.nodeAt(fromPos)
               if (sourceNode && sourceNode.type.name === 'imageGroup') {
                 const oldImages = [...sourceNode.attrs.images]
@@ -385,20 +384,20 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
               view.dispatch(tr)
               return true
             }
-          } catch (e) {}
+          } catch (e) { }
         }
-        
-        // 2. กรณี: เป็นการดึงไฟล์ใหม่จากคอมพิวเตอร์มาหย่อนในบรรทัดว่างๆ
+
+        // กรณี เป็นการดึงไฟล์ใหม่จากคอมพิวเตอร์มาหย่อนในบรรทัดว่างๆ
         if (!moved && event.dataTransfer?.files?.length) {
           const file = event.dataTransfer.files[0]
           if (file.type.startsWith('image/')) {
             event.preventDefault()
-            
-            // 🛑 เช็ค Limit 6 รูป
+
+            // เช็ค Limit 6 รูป
             let total = 0
             view.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
             if (total >= 6) {
-              alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+              alert('คุณแทรกรูปภาพครบ 6 รูปแล้ว ไม่สามารถเพิ่มได้อีก')
               return true
             }
 
@@ -451,21 +450,21 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
           <div className="w-px h-6 bg-gray-200 mx-2"></div>
           <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-2 rounded-xl transition-all ${editor.isActive('bulletList') ? 'bg-yellow-50 text-yellow-600' : 'text-gray-500 hover:bg-gray-50'}`}><List className="w-5 h-5" /></button>
         </div>
-        
-        {/* 🌟 ปุ่มเพิ่มรูปภาพ พร้อมระบบเช็ค Limit 6 รูป */}
-        <button 
-          type="button" 
+
+        {/* ปุ่มเพิ่มรูปภาพ พร้อมระบบเช็ค Limit 6 รูป */}
+        <button
+          type="button"
           onClick={() => {
-            // 🛑 เช็ค Limit ก่อนเปิดหน้าต่างเลือกไฟล์
+            // เช็ค Limit ก่อนเปิดหน้าต่างเลือกไฟล์
             let total = 0
             editor.state.doc.descendants((n: any) => { if (n.type.name === 'imageGroup') total += n.attrs.images.length })
-            
+
             if (total >= 6) {
-              // 🌟 เรียกใช้ Modal ผ่าน onError ตรงนี้ครับ!
+              // เรียกใช้ Modal ผ่าน onError 
               if (onError) {
-                onError('รูปภาพเกินกำหนด', 'คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+                onError('รูปภาพเกินกำหนด', 'คุณแทรกรูปภาพครบ 6 รูปแล้ว ไม่สามารถเพิ่มได้อีก')
               } else {
-                alert('คุณแทรกรูปภาพครบ 6 รูปแล้วครับ ไม่สามารถเพิ่มได้อีก')
+                alert('คุณแทรกรูปภาพครบ 6 รูปแล้ว ไม่สามารถเพิ่มได้อีก')
               }
               return
             }
@@ -481,9 +480,9 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
                   editor.chain().focus().insertContent({ type: 'imageGroup', attrs: { images: [url] } }).run()
                 } catch (error) {
                   console.error("Upload Error:", error)
-                  // ดัก Error ตอนอัปโหลดให้เป็น Modal ด้วยเลย
+                  // ดัก Error ตอนอัปโหลดให้เป็น Modal
                   if (onError) {
-                    onError("อัปโหลดไม่สำเร็จ", "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ กรุณาลองใหม่อีกครั้งครับ")
+                    onError("อัปโหลดไม่สำเร็จ", "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ กรุณาลองใหม่อีกครั้ง")
                   } else {
                     alert("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่")
                   }
@@ -491,7 +490,7 @@ export const TiptapEditor = ({ content, onChange, onError }: { content: string, 
               }
             }
             input.click()
-          }} 
+          }}
           className="bg-yellow-400 text-yellow-900 px-5 py-2 rounded-xl text-sm font-bold flex gap-2 items-center hover:bg-yellow-500 transition-all shadow-sm active:scale-95"
         >
           <ImageIcon className="w-4 h-4" /> เพิ่มรูปภาพ

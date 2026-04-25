@@ -50,8 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, []) // ทำงานแค่ครั้งเดียวตอนเปิดเว็บ
-
+  }, [])
   return (
     <AuthContext.Provider value={{ user, session, isLoading }}>
       {children}
@@ -59,5 +58,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-// สร้าง Hook ไว้ให้ Component อื่นเรียกใช้เรียกใช้ง่ายๆ
+// สร้าง Hook ไว้ให้ Component อื่นเรียกใช้
 export const useAuth = () => useContext(AuthContext)

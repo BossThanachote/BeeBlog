@@ -22,7 +22,7 @@ export default function WriteBlogPage() {
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '' })
   const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' })
   const supabase = createClient()
-  // 🌟 1. ดักจับการย้อนกลับมา (Auto-Refresh) เพื่อคืนชีพ Tiptap และโหลดข้อมูล Draft
+  // ดักจับการย้อนกลับมา (Auto-Refresh) เพื่อคืนชีพ Tiptap และโหลดข้อมูล Draft
   useEffect(() => {
     const isReturning = sessionStorage.getItem('beeblog_returning')
     if (isReturning === 'true') {
@@ -50,7 +50,7 @@ export default function WriteBlogPage() {
     }
   }, [])
 
-  // 🌟 2. เซฟข้อมูลอัตโนมัติ (Debounce 1 วินาที)
+  // เซฟข้อมูลอัตโนมัติ (Debounce 1 วินาที)
   useEffect(() => {
     if (isLoaded) {
       const timeoutId = setTimeout(() => {
@@ -65,7 +65,7 @@ export default function WriteBlogPage() {
     }
   }, [title, subtitle, coverImage, content, isLoaded])
 
-  // 🌟 3. จัดการปุ่ม Back ของ Browser (Hash Routing #preview)
+  // จัดการปุ่ม Back ของ Browser (Hash Routing #preview)
   useEffect(() => {
     const handlePopState = () => {
       if (window.location.hash !== '#preview') {
@@ -78,7 +78,7 @@ export default function WriteBlogPage() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  // --- Helper Functions ---
+  //Helper Functions
   
   const extractImagesFromHTML = (html: string): string[] => {
     if (typeof window === 'undefined') return [];
@@ -99,17 +99,17 @@ export default function WriteBlogPage() {
     setModalConfig({ isOpen: true, title, message })
   }
 
-  // --- Action Handlers ---
+  // Action Handlers 
 
   const handlePrePublish = () => {
     if (!title.trim()) {
-      showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่หัวข้อบทความก่อนครับ")
+      showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่หัวข้อบทความก่อน")
       return
     }
 
     const currentImagesCount = extractImagesFromHTML(content).length;
     if (currentImagesCount > 6) {
-      showError("รูปภาพเกินกำหนด", `คุณมีรูปภาพ ${currentImagesCount} รูป ซึ่งเกินกำหนด (สูงสุด 6 รูป) กรุณาลบออกบางส่วนก่อนครับ`)
+      showError("รูปภาพเกินกำหนด", `คุณมีรูปภาพ ${currentImagesCount} รูป ซึ่งเกินกำหนด (สูงสุด 6 รูป) กรุณาลบออกบางส่วนก่อน`)
       return
     }
 
@@ -122,22 +122,22 @@ export default function WriteBlogPage() {
   }
 
   const handleFinalPublish = async () => {
-    if (!coverImage) return showError("ขาดรูปปก", "กรุณาอัปโหลดรูปภาพหน้าปกก่อน Publish ครับ")
-    if (!title.trim()) return showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่ Preview Title ครับ")
+    if (!coverImage) return showError("ขาดรูปปก", "กรุณาอัปโหลดรูปภาพหน้าปกก่อน Publish ")
+    if (!title.trim()) return showError("ข้อมูลไม่ครบถ้วน", "กรุณาใส่ Preview Title ")
 
     try {
-      // 1. ดึงข้อมูล User
+      // ดึงข้อมูล User
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
-        showError("ไม่พบผู้ใช้งาน", "กรุณาเข้าสู่ระบบใหม่อีกครั้งก่อนทำการ Publish ครับ");
+        showError("ไม่พบผู้ใช้งาน", "กรุณาเข้าสู่ระบบใหม่อีกครั้งก่อนทำการ Publish ");
         return;
       }
 
       const generatedSlug = title.trim().replace(/\s+/g, '-').replace(/[^\w\u0E00-\u0E7F-]+/g, '') + '-' + Date.now()
       const extractedImages = extractImagesFromHTML(content);
 
-      // 🌟🌟🌟 ส่วนที่เพิ่มเข้ามา: แปลง HTML เสกแท็ก <img> เข้าไปในเนื้อหา 🌟🌟🌟
+      // แปลง HTML เสกแท็ก <img> เข้าไปในเนื้อหา 
       let finalHTMLContent = content;
       
       if (typeof window !== 'undefined') {
@@ -153,7 +153,7 @@ export default function WriteBlogPage() {
               const decodedStr = data.replace(/&quot;/g, '"');
               const urls = JSON.parse(decodedStr);
               
-              g.innerHTML = ''; // เคลียร์ข้อความเก่าทิ้ง
+              g.innerHTML = ''; 
               
               // วนลูปสร้างแท็ก <img> ใส่กรอบ <div> ตามที่ CSS หน้าอ่านบทความต้องการ
               urls.forEach((url: string) => {
@@ -169,11 +169,10 @@ export default function WriteBlogPage() {
           }
         });
         
-        finalHTMLContent = doc.body.innerHTML; // เอา HTML ที่สมบูรณ์แบบพร้อมใช้งาน
+        finalHTMLContent = doc.body.innerHTML; 
       }
-      // 🌟🌟🌟 สิ้นสุดการแปลง HTML 🌟🌟🌟
 
-      // 2. เซฟลง Database
+      // เซฟลง Database
       const { error } = await supabase
         .from('blogs')
         .insert([
@@ -182,7 +181,7 @@ export default function WriteBlogPage() {
             summary: subtitle,
             slug: generatedSlug,
             cover_image: coverImage,
-            content: finalHTMLContent, // 🌟 ใช้ตัวแปร finalHTMLContent แทน content เดิม!
+            content: finalHTMLContent, 
             gallery_images: extractedImages,
             is_published: true,
             author_id: user.id 
@@ -191,14 +190,14 @@ export default function WriteBlogPage() {
 
       if (error) throw error
 
-      // 3. เคลียร์ Draft ทิ้งเมื่อสำเร็จ
+      // เคลียร์ Draft ทิ้งเมื่อสำเร็จ
       localStorage.removeItem('beeblog_draft')
       sessionStorage.removeItem('beeblog_returning')
 
       setSuccessModal({
         isOpen: true,
         title: "Publish สำเร็จ! 🎉",
-        message: "บทความของคุณถูกเผยแพร่ลงระบบ BeeBlog เรียบร้อยแล้ว พร้อมให้ทุกคนเข้ามาอ่านแล้วครับ"
+        message: "บทความของคุณถูกเผยแพร่ลงระบบ BeeBlog เรียบร้อยแล้ว พร้อมให้ทุกคนเข้ามาอ่านแล้ว"
       })
 
     } catch (error) {
@@ -219,7 +218,7 @@ export default function WriteBlogPage() {
   return (
     <div className="min-h-screen bg-[#fafafa]">
       
-      {/* ⚠️ Modal แจ้งเตือนข้อผิดพลาด */}
+      {/* Modal แจ้งเตือนข้อผิดพลาด */}
       <AlertModal 
         isOpen={modalConfig.isOpen}
         title={modalConfig.title}
@@ -227,14 +226,14 @@ export default function WriteBlogPage() {
         onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
       />
 
-      {/* ✅ Modal แจ้งเตือนเมื่อสำเร็จ */}
+      {/*  Modal แจ้งเตือนเมื่อสำเร็จ */}
       <SuccessModal
         isOpen={successModal.isOpen}
         title={successModal.title}
         message={successModal.message}
         onConfirm={() => {
           setSuccessModal({ ...successModal, isOpen: false })
-          window.location.href = '/' // 🚀 วาร์ปกลับหน้า Home เมื่อผู้ใช้กดรับทราบ
+          window.location.href = '/' 
         }}
       />
 
