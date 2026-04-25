@@ -11,7 +11,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname(); 
 
-  // เช็คว่าตอนนี้อยู่หน้าเขียนบล็อกหรือเปล่า
   const isWritePage = pathname === '/write';
 
   useEffect(() => {
@@ -29,11 +28,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="th">
+      <head>
+        <title>BeeBlog | พื้นที่แบ่งปันเรื่องราวของคนรักการเขียน</title>
+        <meta name="description" content="แพลตฟอร์ม Blog ทันสมัยสำหรับคนรุ่นใหม่ สร้างโดย Boss Thanachote" />
+        
+        <meta property="og:title" content="BeeBlog" />
+        <meta property="og:description" content="พื้นที่แบ่งปันเรื่องราวของคนรักการเขียน" />
+        <meta property="og:image" content="/og-image.png" />
+        <meta property="og:url" content="https://bee-blog-8cww.vercel.app" />
+        <meta property="og:type" content="website" />
+        
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="/og-image.png" />
+        
+
+        <link rel="icon" href="/icon.png" />
+      </head>
       <body className="bg-white min-h-screen text-gray-900 overflow-x-hidden">
         <AuthProvider>
-
-
-          {/* ถ้าไม่ใช่หน้า Write ค่อยแสดง Navbar และ Sidebar แบบเดิม */}
           {!isWritePage && (
             <>
               <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
@@ -41,17 +54,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </>
           )}
 
-          {/* เนื้อหาหลัก: ถ้าเป็นหน้า Write ให้เต็มจอไปเลย ไม่ต้องมี padding ซ้าย */}
           <main
-            className={`transition-all duration-300 ease-in-out bg-white min-h-screen flex flex-col ${!isWritePage ? 'pt-16' : '' // ถ้าหน้าปกติเว้นบนให้ Navbar
-              } ${!isWritePage && isSidebarOpen ? 'md:pl-64' : 'pl-0'
-              }`}
+            className={`transition-all duration-300 ease-in-out bg-white min-h-screen flex flex-col ${
+              !isWritePage ? 'pt-16' : ''
+            } ${!isWritePage && isSidebarOpen ? 'md:pl-64' : 'pl-0'}`}
           >
             <div className={`${!isWritePage ? 'max-w-7xl mx-auto px-4 sm:px-8' : 'w-full'} w-full flex-1 bg-white`}>
               {children}
             </div>
           </main>
-
         </AuthProvider>
       </body>
     </html>
