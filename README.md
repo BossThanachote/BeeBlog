@@ -52,4 +52,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 *   **Responsiveness:** ระบบถูกออกแบบให้รองรับ Desktop เป็นหลัก แต่มีการใช้ Tailwind CSS เพื่อให้แสดงผลได้ดีใน Mobile (Responsive Design)
 *   **ข้อจำกัด:** ระบบนี้เป็นการพัฒนาเพื่อจุดประสงค์ตาม Assignment ที่ได้รับมอบหมาย จึงมีความสามารถพื้นฐานของ Blog เช่น การสร้าง/แก้ไข/ลบบทความ และการอนุมัติคอมเมนต์ ยังไม่มีระบบระบบแจ้งเตือนผ่านอีเมล (Email Notification) ในเวอร์ชันนี้
 
+account ที่มี role admin 
+- email: adminTest@hotmail.com
+- password: admin1234
+
 หากอยากเข้าผ่านเว็บไซต์จริง ให้ไปที่ https://bee-blog-8cww.vercel.app/

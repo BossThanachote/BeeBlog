@@ -176,7 +176,7 @@ export const RightSidebar = () => {
 
                 <button
                   onClick={() => handleFollowAction(author.id, isFollowing)}
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border shrink-0 flex items-center gap-1.5 ${isFollowing
+                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${isFollowing
                       ? 'bg-gray-50 text-gray-400 border-gray-200'
                       : 'bg-white text-black border-black hover:bg-black hover:text-white shadow-sm'
                     }`}
@@ -184,7 +184,7 @@ export const RightSidebar = () => {
                   {isFollowing ? (
                     <><UserCheck className="w-3.5 h-3.5" /> Following</>
                   ) : (
-                    <><UserPlus className="w-3.5 h-3.5" /> Follow</>
+                    <><UserPlus className="w-3.5 h-3.5 " /> Follow</>
                   )}
                 </button>
               </div>

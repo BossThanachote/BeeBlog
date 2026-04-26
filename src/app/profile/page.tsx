@@ -107,7 +107,7 @@ export default function ProfilePage() {
           <div className="flex flex-col mb-8">
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-4xl font-black text-gray-900 tracking-tight">{userProfile.username}</h1>
-              <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors"><MoreHorizontal className="w-6 h-6" /></button>
+              <button className="p-2 text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"><MoreHorizontal className="w-6 h-6" /></button>
             </div>
             
             {/* คลิกที่ตัวเลขเพื่อเปิด Modal */}
@@ -116,26 +116,26 @@ export default function ProfilePage() {
                 onClick={() => setFollowModal({ isOpen: true, type: 'followers' })}
                 className="group flex items-center gap-2 text-sm"
               >
-                <span className="font-black text-gray-900 group-hover:underline">{followStats.followers}</span>
-                <span className="text-gray-400 font-medium">Followers</span>
+                <span className="font-black text-gray-900 group-hover:underline cursor-pointer">{followStats.followers}</span>
+                <span className="text-gray-400 font-medium cursor-pointer">Followers</span>
               </button>
               <button 
                 onClick={() => setFollowModal({ isOpen: true, type: 'following' })}
                 className="group flex items-center gap-2 text-sm"
               >
-                <span className="font-black text-gray-900 group-hover:underline">{followStats.following}</span>
-                <span className="text-gray-400 font-medium">Following</span>
+                <span className="font-black text-gray-900 group-hover:underline cursor-pointer">{followStats.following}</span>
+                <span className="text-gray-400 font-medium cursor-pointer">Following</span>
               </button>
             </div>
           </div>
 
           {/* Tabs */}
           <div className="flex border-b border-gray-100 mb-10">
-            <button onClick={() => setActiveTab('home')} className={`pb-4 px-2 mr-8 font-black uppercase text-xs tracking-widest transition-all relative ${activeTab === 'home' ? 'text-black' : 'text-gray-400'}`}>
+            <button onClick={() => setActiveTab('home')} className={`pb-4 px-2 mr-8 font-black uppercase text-xs tracking-widest transition-all relative cursor-pointer ${activeTab === 'home' ? 'text-black' : 'text-gray-400'}`}>
               Home ({userBlogs.length})
               {activeTab === 'home' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black animate-in fade-in zoom-in" />}
             </button>
-            <button onClick={() => setActiveTab('about')} className={`pb-4 px-2 font-black uppercase text-xs tracking-widest transition-all relative ${activeTab === 'about' ? 'text-black' : 'text-gray-400'}`}>
+            <button onClick={() => setActiveTab('about')} className={`pb-4 px-2 font-black uppercase text-xs tracking-widest transition-all relative cursor-pointer ${activeTab === 'about' ? 'text-black' : 'text-gray-400'}`}>
               About
               {activeTab === 'about' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black animate-in fade-in zoom-in" />}
             </button>

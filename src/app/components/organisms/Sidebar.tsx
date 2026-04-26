@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Library, User, BarChart2, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Home, Library, User, ShieldCheck, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 interface SidebarProps {
@@ -42,13 +42,18 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const isActive = (path: string) => pathname === path;
   const isAdminActive = pathname?.startsWith('/admin');
 
-  // ฟังก์ชันจัดการเมื่อกดปุ่ม Profile
-  const handleProfileClick = (e: React.MouseEvent) => {
-    if (!currentUser) {
+  // ฟังก์ชันกลางสำหรับจัดการการคลิก Link
+  const handleLinkClick = (e: React.MouseEvent, href: string) => {
+    // 1. ถ้าเป็น Profile แล้วยังไม่ Login ให้ไปหน้า Login
+    if (href === '/profile' && !currentUser) {
       e.preventDefault();
-      onClose();
+      onClose(); // ปิด Sidebar ทันที
       router.push('/login');
+      return;
     }
+
+    // 2. ปิด Sidebar เสมอเมื่อมีการกด Link (onClose จะทำงานเฉพาะเมื่อ Sidebar เปิดอยู่ในโหมด Mobile)
+    onClose();
   };
 
   return (
@@ -66,11 +71,13 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-100 
         flex flex-col z-40 transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0 
       `}>
         <div className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
 
           <Link
             href="/"
+            onClick={(e) => handleLinkClick(e, '/')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive('/')
                 ? 'bg-yellow-400 text-black font-bold shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
@@ -82,6 +89,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
           <Link
             href="/library"
+            onClick={(e) => handleLinkClick(e, '/library')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive('/library')
                 ? 'bg-yellow-400 text-black font-bold shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
@@ -91,10 +99,9 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             Library
           </Link>
 
-          {/* Profile Link พร้อมระบบเช็ค Login */}
           <Link
             href="/profile"
-            onClick={handleProfileClick}
+            onClick={(e) => handleLinkClick(e, '/profile')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive('/profile')
                 ? 'bg-yellow-400 text-black font-bold shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
@@ -113,6 +120,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
               <Link
                 href="/admin"
+                onClick={(e) => handleLinkClick(e, '/admin')}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isAdminActive
                     ? 'bg-yellow-400 text-black font-bold shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'

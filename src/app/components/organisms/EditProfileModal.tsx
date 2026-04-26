@@ -143,7 +143,7 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
 
       <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-200">
         <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition-colors">
-          <X className="w-6 h-6" />
+          <X className="w-6 h-6 cursor-pointer" />
         </button>
 
         <h2 className="text-2xl font-black text-gray-900 mb-6">Profile information</h2>
@@ -244,13 +244,13 @@ export const EditProfileModal = ({ isOpen, onClose, currentUser, onSaved }: Edit
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 mt-8">
-          <button onClick={onClose} className="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">
+          <button onClick={onClose} className="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors cursor-pointer">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading || !username || isUploadingImage}
-            className="px-6 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             Save
